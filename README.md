@@ -14,6 +14,7 @@ Here are some ideas to get you started:
 - 😄 Pronouns: ...
 - ⚡ Fun fact: ...
 -->
-- 🌱 I’m currently learning github as a corp tool, playing with ansible/git
+- 🌱 I’m currently learning github as a corp tool, and playing with ansible/git
 - 💬 Ask me about IT/IS architecture
 - 📫 How to reach me: claude.bamberger at sogeti dot com
+
