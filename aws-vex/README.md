@@ -104,8 +104,66 @@ par exemple
 
 * Documentation des ressources dans l'exemple
   
-  // TODO
   ```mermaid
-    graph TD;
-    A --> B;
+    graph TD
+    z[.zprofile for exemple] ==> variables
+    variables --o TF_VAR_AWS_REGION>TF_VAR_AWS_REGION]
+    variables --o TF_VAR_AWS_PRIVATE_KEY_PATH>TF_VAR_AWS_PRIVATE_KEY_PATH]
+    variables --o TF_VAR_AWS_PUBLIC_KEY_PATH>TF_VAR_AWS_PUBLIC_KEY_PATH]
+    variables --o TF_VAR_AWS_SECURE_CIDR>TF_VAR_AWS_SECURE_CIDR]
+    
+    TF_VAR_AWS_REGION --> c1[[for exemple 'us-east-1']]
+    TF_VAR_AWS_PRIVATE_KEY_PATH --> c2[[a path to local .ssh for example, pem/pub ou other format]]
+    TF_VAR_AWS_PUBLIC_KEY_PATH --> c2
+    TF_VAR_AWS_SECURE_CIDR --> c3[[les IPs autorisées à entrer en ssh]]
+
+    land/variables.tf --o AWS_LANDFILL_CIDR_BLOCK
+    land/variables.tf --o AWS_LANDFILL_SUBNET
+    land/variables.tf --o AMI_Ubuntu_LTS22_x86>map AMI_Ubuntu_LTS22_x86 des AMIs par région]
+
+    variables ----.alimentent.-> land/variables.tf ==> main.tf --> module/landfill/landfill.tf
+
+    landfill/variables ==> module/landfill/landfill.tf
+    landfill/variables --o secure_cidr>secure_cidr]
+    landfill/variables --o landfill_cidr_block>landfill_cidr_block]
+    landfill/variables --o landfill_subnet>landfill_subnet]
+
+    TF_VAR_AWS_SECURE_CIDR -.-> secure_cidr
+    landfill/variables --o landfill_cidr_block
+    landfill/variables --o landfill_subnet
+    AWS_LANDFILL_CIDR_BLOCK -.-> landfill_cidr_block
+    AWS_LANDFILL_SUBNET -.-> landfill_subnet
+    
+    module/landfill/landfill.tf --> landfill[landfill VPC]
+    landfill -.-> landfill_cidr_block
+
+    module/landfill/landfill.tf --> landlord[landlord subnet]
+    landlord -.-> landfill
+    landlord -.-> landfill_subnet
+
+    module/landfill/landfill.tf --> landlineIGW[landline GW]
+    landlineIGW -.-> landfill
+
+    module/landfill/landfill.tf --> landlineRT[landline RT]
+    landlineRT -.-> landfill
+    landlineRT -.all.-> landlineIGW
+
+    module/landfill/landfill.tf --> landlineRTA[landline RTA]
+    landlineRTA -.-> landlineRT
+    landlineRTA -.-> landlord
+
+    module/landfill/landfill.tf --> landline_ssh
+    landline_ssh -.-> landfill
+    landline_ssh -.port 22/tcp.-> secure_cidr
+
+    main.tf --> landip
+    main.tf --> wopr4-vex-key-pair[keypair to connect]
+    maint.tf --> wopr4[wopr4 instance]
+    wopr4 -.AWS_REGION.-> AMI_Ubuntu_LTS22_x86
+    wopr4 -.-> landlord
+    wopr4 -.-> landline_ssh
+    wopr4 -.-> wopr4-vex-key-pair
+
+    main.tf ==> output[public IP, public ssh key]
+
   ```

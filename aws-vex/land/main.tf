@@ -13,6 +13,8 @@ provider "aws" {
 module "landfill" {
   source      = "./modules/landfill"
   secure_cidr = var.AWS_SECURE_CIDR
+  landfill_cidr_block = var.AWS_LANDFILL_CIDR_BLOCK
+  landfill_subnet = var.AWS_LANDFILL_SUBNET
 }
 resource "aws_eip" "landip" {
   vpc      = true
@@ -31,7 +33,7 @@ resource "aws_instance" "wopr4" {
   vpc_security_group_ids = [module.landfill.landline_sg_ssh_id]
   # the Public SSH key
   key_name = aws_key_pair.wopr4-vex-key-pair.id
-  
+
   #connection { # TBC
   #  user        = "ubuntu"
   #  private_key = file("${var.AWS_PRIVATE_KEY_PATH}")
@@ -41,5 +43,5 @@ output "wopr4_manage_ip" {
   value = aws_eip.landip.public_ip
 }
 output "wopr4_manage_pubkey" {
-  value = aws_key_pair.myregion-wopr-key-pair.public_key
+  value = aws_key_pair.wopr4-vex-key-pair.public_key
 }

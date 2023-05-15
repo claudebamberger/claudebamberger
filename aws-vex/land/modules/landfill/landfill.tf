@@ -1,11 +1,11 @@
 resource "aws_vpc" "landfill" {
-  cidr_block       = "192.168.88.0/24"
+  cidr_block       = var.landfill_cidr_block
   instance_tenancy = "default"
   tags             = { name = "landfill" }
 }
 resource "aws_subnet" "landlord" {
   vpc_id     = aws_vpc.landfill.id
-  cidr_block = "192.168.88.0/28"
+  cidr_block = var.landfill_subnet
   tags       = { name = "landfill" }
 }
 resource "aws_internet_gateway" "landline" {

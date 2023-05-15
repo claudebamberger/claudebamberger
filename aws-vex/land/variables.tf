@@ -5,6 +5,7 @@ variable "AWS_REGION" {
 variable "AWS_SECURE_CIDR" {
   description = "CIDR sûr en entrée, exported shell"
   type        = string
+  sensitive   = true
 }
 variable "AMI_Ubuntu_LTS22_x86" {
   type        = map(string)
@@ -22,4 +23,14 @@ variable "AWS_PUBLIC_KEY_PATH" {
 variable "AWS_PRIVATE_KEY_PATH" {
   description = "chemin de la clé privée (pour la région), exported shell"
   type        = string
+}
+variable AWS_LANDFILL_CIDR_BLOCK {
+  description = "CIDR correspondant au réseau"
+  type        = string
+  default     = "192.168.88.0/24"
+}
+variable AWS_LANDFILL_SUBNET {
+  description = "CIDR correspondant au sous-réseau"
+  type        = string
+  default     = "192.168.88.0/28"
 }
