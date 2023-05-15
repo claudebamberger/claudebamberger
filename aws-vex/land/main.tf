@@ -18,8 +18,8 @@ resource "aws_eip" "landip" {
   vpc      = true
   instance = aws_instance.wopr4.id
 }
-resource "aws_key_pair" "myregion-wopr-key-pair" {
-  key_name   = "myregion-key-pair"
+resource "aws_key_pair" "wopr4-vex-key-pair" {
+  key_name   = "wopr4-vex-key-pair"
   public_key = file(var.AWS_PUBLIC_KEY_PATH)
 }
 resource "aws_instance" "wopr4" {
@@ -30,11 +30,12 @@ resource "aws_instance" "wopr4" {
   # Security Group
   vpc_security_group_ids = [module.landfill.landline_sg_ssh_id]
   # the Public SSH key
-  key_name = aws_key_pair.myregion-wopr-key-pair.id
-  connection { # TBC
-    user        = "ubuntu"
-    private_key = file("${var.AWS_PRIVATE_KEY_PATH}")
-  }
+  key_name = aws_key_pair.wopr4-vex-key-pair.id
+  
+  #connection { # TBC
+  #  user        = "ubuntu"
+  #  private_key = file("${var.AWS_PRIVATE_KEY_PATH}")
+  #}
 }
 output "wopr4_manage_ip" {
   value = aws_eip.landip.public_ip

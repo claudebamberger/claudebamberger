@@ -1,5 +1,5 @@
 resource "aws_vpc" "landfill" {
-  cidr_block       = "192.168.88.0/28"
+  cidr_block       = "192.168.88.0/24"
   instance_tenancy = "default"
   tags             = { name = "landfill" }
 }

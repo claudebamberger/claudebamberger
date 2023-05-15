@@ -103,3 +103,9 @@ par exemple
   * on peut enfin produire des sorties par output comme le module (directement dans ``main.tf``)
 
 * Documentation des ressources dans l'exemple
+  
+  // TODO
+  ```mermaid
+    graph TD;
+    A --> B;
+  ```
