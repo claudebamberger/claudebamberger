@@ -10,37 +10,29 @@ terraform {
 provider "aws" {
   region = var.AWS_REGION
 }
+
+resource "aws_key_pair" "wopr4-vex-key-pair" {
+  key_name   = "wopr4-vex-key-pair"
+  public_key = file(var.AWS_PUBLIC_KEY_PATH)
+}
+
 module "landfill" {
   source              = "./modules/landfill"
   secure_cidr         = var.AWS_SECURE_CIDR
   landfill_cidr_block = var.AWS_LANDFILL_CIDR_BLOCK
   landfill_subnet     = var.AWS_LANDFILL_SUBNET
 }
-resource "aws_eip" "landip" {
-  vpc      = true
-  instance = aws_instance.wopr4.id
+module "wopr" {
+  source             = "./modules/wopr"
+  region             = var.AWS_REGION
+  landline_subnet_id = module.landfill.landline_subnet_id
+  landline_sg_ssh_id = module.landfill.landline_sg_ssh_id
+  public_key_path    = var.AWS_PUBLIC_KEY_PATH
+  private_key_path   = var.AWS_PRIVATE_KEY_PATH
+  key_pair_id        = aws_key_pair.wopr4-vex-key-pair.id
 }
-resource "aws_key_pair" "wopr4-vex-key-pair" {
-  key_name   = "wopr4-vex-key-pair"
-  public_key = file(var.AWS_PUBLIC_KEY_PATH)
-}
-resource "aws_instance" "wopr4" {
-  ami           = lookup(var.AMI_Ubuntu_LTS22_x86, var.AWS_REGION)
-  instance_type = "t2.micro"
-  # VPC
-  subnet_id = module.landfill.landline_subnet_id
-  # Security Group
-  vpc_security_group_ids = [module.landfill.landline_sg_ssh_id]
-  # the Public SSH key
-  key_name = aws_key_pair.wopr4-vex-key-pair.id
-
-  #connection { # inutile avec keyname…
-  #  user        = "ubuntu"
-  #  private_key = file("${var.AWS_PRIVATE_KEY_PATH}")
-  #}
-}
-output "wopr4_manage_ip" {
-  value = aws_eip.landip.public_ip
+output "wopr4_public_ip" {
+  value = module.wopr.wopr4_manage_ip
 }
 output "wopr4_manage_pubkey" {
   value = aws_key_pair.wopr4-vex-key-pair.public_key

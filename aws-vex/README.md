@@ -45,7 +45,7 @@
 * lancer ``tf init`` dans ``land`` (*<span style="color:darkgreen">Terraform has been successfully initialized!</span>*)
 * on peut utiliser ``tf fmt`` puis ``tf validate`` avant ``tf apply`` et inspecter ce qu'il ferait
 
-## Terraform plus sérieusement
+### Terraform plus sérieusement
 * on peut exporter des variables, par exemple depuis ``~/.zprofile``, en les nommant ``TF_VAR_[nom]``
 par exemple 
   ```
@@ -102,7 +102,9 @@ par exemple
     ``` 
   * on peut enfin produire des sorties par output comme le module (directement dans ``main.tf``)
 
-* Documentation des ressources dans l'exemple
+  * enfin on fait de même avec la création d'instance (avec son IP de contact)
+
+### Documentation des ressources dans l'exemple
   
   ```mermaid
     graph TD
@@ -119,21 +121,25 @@ par exemple
 
     land/variables.tf --o AWS_LANDFILL_CIDR_BLOCK
     land/variables.tf --o AWS_LANDFILL_SUBNET
-    land/variables.tf --o AMI_Ubuntu_LTS22_x86>map AMI_Ubuntu_LTS22_x86 des AMIs par région]
+    
+    variables ----.alimentent.-> land/variables.tf ==> main.tf{main.tf}
+    main.tf --> wopr4-vex-key-pair[wopr4-vex-key-pair\nkeypair to connect]
+    main.tf --> module/landfill/landfill.tf
+    main.tf ====> output[output public IP, public ssh key]
+    main.tf --> module/wopr/wopr.tf
+  ```
 
-    variables ----.alimentent.-> land/variables.tf ==> main.tf --> module/landfill/landfill.tf
-
+  ```mermaid
+    graph TD
+    main.tf{main.tf} --> module/landfill/landfill.tf
     landfill/variables ==> module/landfill/landfill.tf
     landfill/variables --o secure_cidr>secure_cidr]
     landfill/variables --o landfill_cidr_block>landfill_cidr_block]
     landfill/variables --o landfill_subnet>landfill_subnet]
+    main.tf -.-> TF_VAR_AWS_SECURE_CIDR -.-> secure_cidr
+    main.tf -.-> AWS_LANDFILL_CIDR_BLOCK -.-> landfill_cidr_block
+    main.tf -.-> AWS_LANDFILL_SUBNET -.-> landfill_subnet
 
-    TF_VAR_AWS_SECURE_CIDR -.-> secure_cidr
-    landfill/variables --o landfill_cidr_block
-    landfill/variables --o landfill_subnet
-    AWS_LANDFILL_CIDR_BLOCK -.-> landfill_cidr_block
-    AWS_LANDFILL_SUBNET -.-> landfill_subnet
-    
     module/landfill/landfill.tf --> landfill[landfill VPC]
     landfill -.-> landfill_cidr_block
 
@@ -156,14 +162,40 @@ par exemple
     landline_ssh -.-> landfill
     landline_ssh -.port 22/tcp.-> secure_cidr
 
-    main.tf --> landip
-    main.tf --> wopr4-vex-key-pair[keypair to connect]
-    maint.tf --> wopr4[wopr4 instance]
-    wopr4 -.AWS_REGION.-> AMI_Ubuntu_LTS22_x86
-    wopr4 -.-> landlord
-    wopr4 -.-> landline_ssh
-    wopr4 -.-> wopr4-vex-key-pair
+    module/landfill/landfill.tf ====> output[output id security groupe SSG,\n id subnet landlord, id VPC]
+    landline_ssh -.- output
+    landlord -.- output
+    landfill -.- output
+  ```
 
-    main.tf ==> output[public IP, public ssh key]
+  ```mermaid
+    graph TD
+    main.tf --> module/wopr/wopr.tf
+    wopr/variables.tf --o region>region]
+    wopr/variables.tf --o AMI_Ubuntu_LTS22_x86>map AMI_Ubuntu_LTS22_x86 des AMIs par région]
+    wopr/variables.tf --o public_key_path>public_key_path]
+    wopr/variables.tf --o private_key_path>private_key_path]
+    wopr/variables.tf --o landline_subnet_id>landline_subnet_id]
+    wopr/variables.tf --o landline_sg_ssh_id>landline_sg_ssh_id]
+    wopr/variables.tf --o key_pair_id>key_pair_id]
+    main.tf -.-> TF_VAR_AWS_REGION -.-> region
+    main.tf -.-> landlord_subnet_id -.-> landline_subnet_id
+    main.tf -.-> landline_SG_ssh -.-> landline_sg_ssh_id
+    wopr4-vex-key-pair -.-> key_pair_id
+
+    module/wopr/wopr.tf --> landip --> public_ip
+    module/wopr/wopr.tf --> wopr4[wopr4 instance]
+    wopr4 -.AWS_REGION.-> AMI_Ubuntu_LTS22_x86
+    wopr4 -.-> landline_subnet_id
+    wopr4 -.-> landline_sg_ssh_id
+    wopr4 -.-> key_pair_id
+
+    module/wopr/wopr.tf ====> output[output public IP]
+    public_ip -.- output
 
   ```
+  ## REFERENCES 
+  - [Terraform CLI](https://developer.hashicorp.com/terraform/cli)
+  - [Provider AWS Terraform Hashicorp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
+  - [Ecriture de modules Terraform](https://developer.hashicorp.com/terraform/language/modules/develop)
+  - [Ecriture Flowchart Mermaid](https://mermaid.js.org/syntax/flowchart.html)
