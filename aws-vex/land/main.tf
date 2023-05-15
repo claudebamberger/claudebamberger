@@ -11,10 +11,10 @@ provider "aws" {
   region = var.AWS_REGION
 }
 module "landfill" {
-  source      = "./modules/landfill"
-  secure_cidr = var.AWS_SECURE_CIDR
+  source              = "./modules/landfill"
+  secure_cidr         = var.AWS_SECURE_CIDR
   landfill_cidr_block = var.AWS_LANDFILL_CIDR_BLOCK
-  landfill_subnet = var.AWS_LANDFILL_SUBNET
+  landfill_subnet     = var.AWS_LANDFILL_SUBNET
 }
 resource "aws_eip" "landip" {
   vpc      = true
@@ -34,7 +34,7 @@ resource "aws_instance" "wopr4" {
   # the Public SSH key
   key_name = aws_key_pair.wopr4-vex-key-pair.id
 
-  #connection { # TBC
+  #connection { # inutile avec keyname…
   #  user        = "ubuntu"
   #  private_key = file("${var.AWS_PRIVATE_KEY_PATH}")
   #}

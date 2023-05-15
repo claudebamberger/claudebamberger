@@ -24,12 +24,12 @@ variable "AWS_PRIVATE_KEY_PATH" {
   description = "chemin de la clé privée (pour la région), exported shell"
   type        = string
 }
-variable AWS_LANDFILL_CIDR_BLOCK {
+variable "AWS_LANDFILL_CIDR_BLOCK" {
   description = "CIDR correspondant au réseau"
   type        = string
   default     = "192.168.88.0/24"
 }
-variable AWS_LANDFILL_SUBNET {
+variable "AWS_LANDFILL_SUBNET" {
   description = "CIDR correspondant au sous-réseau"
   type        = string
   default     = "192.168.88.0/28"
