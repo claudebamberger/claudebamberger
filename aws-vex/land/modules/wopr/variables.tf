@@ -11,6 +11,15 @@ variable "AMI_Ubuntu_LTS22_x86" {
     eu-west-3    = "ami-05e8e219ac7e82eba"
   }
 }
+variable "AMI_Ubuntu_LTS22_arm64" {
+  type        = map(string)
+  description = "AMI pour Ubuntu LTS 22.04 sur ARM64"
+  default = {
+    us-east-1    = "ami-0c6c29c5125214c77"
+    eu-central-1 = "ami-07625524674f7c390"
+    eu-west-3    = "ami-0bd3b255f1beeae5e"
+  }
+}
 variable "public_key_path" {
   description = "chemin de la clé publique (pour la région), exported shell"
   type        = string
