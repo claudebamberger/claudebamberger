@@ -104,8 +104,37 @@ par exemple
 
   * enfin on fait de même avec la création d'instance (avec son IP de contact)
 
+#### Alternative avec module de la Registry
+  * on peut remplacer le module "landfill" par un module vpc de la registry
+  ```
+  module "vpc" {
+    source  = "terraform-aws-modules/vpc/aws"
+    version = "4.0.2"
+
+    cidr = "${var.AWS_SECURE_CIDR}"
+    private_subnets = [var.AWS_LANDFILL_SUBNET]
+
+    enable_nat_gateway = true
+    single_nat_gateway = true
+    one_nat_gateway_per_az = true
+    enable_vpn_gateway     = true
+
+    manage_default_vpc            = false
+    manage_default_network_acl    = false
+    manage_default_security_group = false
+  }
+  ```
+  et
+  ```
+  module "security-group" {
+    source  = "terraform-aws-modules/security-group/aws"
+    version = "4.17.2"
+  }
+  ```
+  [//]: # ( TODO compléter )
 ### Documentation des ressources dans l'exemple
-  
+
+#### main  
   ```mermaid
     graph TD
     z[.zprofile for exemple] ==> variables
@@ -124,15 +153,19 @@ par exemple
     
     variables ----.alimentent.-> land/variables.tf ==> main.tf{main.tf}
     main.tf --> wopr4-vex-key-pair[wopr4-vex-key-pair\nkeypair to connect]
-    main.tf --> module/landfill/landfill.tf
-    main.tf ====> output[output public IP, public ssh key]
-    main.tf --> module/wopr/wopr.tf
+    subgraph suite
+      main.tf --> module/landfill/landfill.tf
+      main.tf ====> output[output public IP, public ssh key]
+      main.tf --> module/wopr/wopr.tf
+    end
   ```
-
+#### landfill
   ```mermaid
     graph TD
-    main.tf{main.tf} --> module/landfill/landfill.tf
-    landfill/variables ==> module/landfill/landfill.tf
+    subgraph avant 
+      main.tf{main.tf} --> module/landfill/landfill.tf
+    end
+    module/landfill/landfill.tf ==> landfill/variables 
     landfill/variables --o secure_cidr>secure_cidr]
     landfill/variables --o landfill_cidr_block>landfill_cidr_block]
     landfill/variables --o landfill_subnet>landfill_subnet]
@@ -167,10 +200,35 @@ par exemple
     landlord -.- output
     landfill -.- output
   ```
-
+  
+##### Alternative avec module de la Registry
+  
+  [//]: # ( TODO compléter )
   ```mermaid
     graph TD
-    main.tf --> module/wopr/wopr.tf
+    subgraph avant 
+      main.tf{main.tf} --> module_vpc
+    end
+    module_vpc --o cidr>cidr]
+    module_vpc --o private_subnets>_subnet]
+    main.tf -.-> AWS_LANDFILL_CIDR_BLOCK -.-> cidr
+    main.tf -.-> AWS_LANDFILL_SUBNET -.-> private_subnets
+
+    module_vpc --o enable_nat_gateway --o true1[true]
+    module_vpc --o single_nat_gateway --o true2[true]
+    module_vpc --o one_nat_gateway_per_az --o true3[true]
+    module_vpc --o enable_vpn_gateway --o true4[true]
+
+    module_vpc --o manage_default_vpc --o false1[false]
+    module_vpc --o manage_default_network_acl --o false2[false]
+    module_vpc --o manage_default_security_group --o false3[false]
+  ```
+#### wopr
+  ```mermaid
+    graph TD
+    subgraph avant
+      main.tf --> module/wopr/wopr.tf
+    end
     wopr/variables.tf --o region>region]
     wopr/variables.tf --o AMI_Ubuntu_LTS22_x86>map AMI_Ubuntu_LTS22_x86 des AMIs par région]
     wopr/variables.tf --o public_key_path>public_key_path]
@@ -189,6 +247,7 @@ par exemple
     wopr4 -.-> landline_subnet_id
     wopr4 -.-> landline_sg_ssh_id
     wopr4 -.-> key_pair_id
+    wopr4 -.-> tags -.-> name[[name=wopr]]
 
     module/wopr/wopr.tf ====> output[output public IP]
     public_ip -.- output

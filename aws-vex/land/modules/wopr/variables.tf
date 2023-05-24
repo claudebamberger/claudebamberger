@@ -34,10 +34,10 @@ variable "landline_subnet_id" {
   type        = string
 }
 
-variable "landline_sg_ssh_id" {
-  description = "le security groupe pour ssh from outside"
-  type        = string
-}
+#variable "landline_sg_ssh_id" {
+#  description = "le security groupe pour ssh from outside"
+#  type        = string
+#}
 
 variable "key_pair_id" {
   description = "l'ID de la paire de clé ssh pour entrer (et sortir en fait)"
