@@ -6,7 +6,8 @@ resource "aws_instance" "wopr4" {
   # VPC
   subnet_id = var.landline_subnet_id
   # Security Group
-  #TODO check why # vpc_security_group_ids = [var.landline_sg_ssh_id]
+  #vpc_security_group_ids = [var.landline_sg_ssh_id]
+  security_groups = [var.landline_sg_ssh_id]
   # the Public SSH key
   key_name = var.key_pair_id
   tags = {

@@ -49,20 +49,42 @@ module "vpc" {
   default_network_acl_name    = "landfill-ACL"
   default_route_table_name    = "landfill-RT"
   default_security_group_name = "landfill-SG"
-
 }
-module "wopr" {
+resource "aws_security_group" "landline_ssh" {
+  vpc_id = module.vpc.vpc_id
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = -1
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+  ingress {
+    description      = "SSH from outside"
+    from_port        = 22
+    to_port          = 22
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+  tags = { name = "landfill" }
+}
+module "woprPub" {
   source             = "./modules/wopr"
   region             = var.AWS_REGION
   landline_subnet_id = module.vpc.public_subnets[0]
-  #landline_sg_ssh_id = module.vpc.default_security_group_id
-  public_key_path  = var.AWS_PUBLIC_KEY_PATH
-  private_key_path = var.AWS_PRIVATE_KEY_PATH
-  key_pair_id      = aws_key_pair.wopr4-vex-key-pair.id
+  landline_sg_ssh_id = aws_security_group.landline_ssh.id
+  key_pair_id        = aws_key_pair.wopr4-vex-key-pair.id
 }
-
+module "woprPriv" {
+  source             = "./modules/wopr"
+  region             = var.AWS_REGION
+  landline_subnet_id = module.vpc.private_subnets[0]
+  landline_sg_ssh_id = aws_security_group.landline_ssh.id
+  key_pair_id        = aws_key_pair.wopr4-vex-key-pair.id
+}
 output "wopr4_public_ip" {
-  value = module.wopr.wopr4_manage_ip
+  value = module.woprPub.wopr4_manage_ip
 }
 output "wopr4_manage_pubkey" {
   value = aws_key_pair.wopr4-vex-key-pair.public_key
