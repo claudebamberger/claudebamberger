@@ -20,8 +20,13 @@ variable "AWS_LANDFILL_CIDR_BLOCK" {
   type        = string
   default     = "192.168.88.0/24"
 }
-variable "AWS_LANDFILL_SUBNET" {
-  description = "CIDR correspondant au sous-réseau"
+variable "AWS_LANDFILL_SUBNET_PRIVE" {
+  description = "CIDR correspondant au sous-réseau privé"
   type        = string
   default     = "192.168.88.0/28"
+}
+variable "AWS_LANDFILL_SUBNET_PUBLIC" {
+  description = "CIDR correspondant au sous-réseau public"
+  type        = string
+  default     = "192.168.88.16/28"
 }

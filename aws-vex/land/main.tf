@@ -10,28 +10,20 @@ terraform {
 provider "aws" {
   region = var.AWS_REGION
 }
-
 resource "aws_key_pair" "wopr4-vex-key-pair" {
   key_name   = "wopr4-vex-key-pair"
   public_key = file(var.AWS_PUBLIC_KEY_PATH)
 }
-
-#module "landfill" {
-#  source              = "./modules/landfill"
-#  secure_cidr         = var.AWS_SECURE_CIDR
-#  landfill_cidr_block = var.AWS_LANDFILL_CIDR_BLOCK
-#  landfill_subnet     = var.AWS_LANDFILL_SUBNET
-#}
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = ">=4.0.2,<4.1"
 
   tags            = { Environment = "test" }
-  cidr            = "192.168.88.0/24"   #var.AWS_LANDFILL_CIDR_BLOCK
-  private_subnets = ["192.168.88.0/28"] # [var.AWS_LANDFILL_SUBNET]
-  public_subnets  = ["192.168.88.16/28"]
+  cidr            = var.AWS_LANDFILL_CIDR_BLOCK
+  private_subnets = ["${var.AWS_LANDFILL_SUBNET_PRIVE}"]
+  public_subnets  = ["${var.AWS_LANDFILL_SUBNET_PUBLIC}"]
 
-  azs = ["us-east-1a"]
+  azs = ["us-east-1a"] # TODO intégrer aux variables
 
   enable_nat_gateway     = true
   single_nat_gateway     = true

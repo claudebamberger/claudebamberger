@@ -104,24 +104,36 @@ par exemple
 
   * enfin on fait de même avec la création d'instance (avec son IP de contact)
 
-#### Alternative avec module de la Registry
+### Alternative avec module de la Registry
   * on peut remplacer le module "landfill" par un module vpc de la registry
   ```
   module "vpc" {
     source  = "terraform-aws-modules/vpc/aws"
-    version = "4.0.2"
+    version = ">=4.0.2,<4.1"
 
-    cidr = "${var.AWS_SECURE_CIDR}"
-    private_subnets = [var.AWS_LANDFILL_SUBNET]
+    tags            = { Environment = "test" }
+    cidr            = var.AWS_LANDFILL_CIDR_BLOCK
+    private_subnets = [ "${var.AWS_LANDFILL_SUBNET_PRIVE}"]
+    public_subnets  = [ "${var.AWS_LANDFILL_SUBNET_PUBLIC}"]
 
-    enable_nat_gateway = true
-    single_nat_gateway = true
+    azs = ["us-east-1a"] # TODO intégrer aux variables
+
+    enable_nat_gateway     = true
+    single_nat_gateway     = true
     one_nat_gateway_per_az = true
-    enable_vpn_gateway     = true
+    enable_vpn_gateway     = false
 
     manage_default_vpc            = false
     manage_default_network_acl    = false
     manage_default_security_group = false
+
+    name                        = "landfill"
+    default_vpc_name            = "landfill"
+    private_subnet_names        = ["landfill-private"]
+    public_subnet_names         = ["landfill-public"]
+    default_network_acl_name    = "landfill-ACL"
+    default_route_table_name    = "landfill-RT"
+    default_security_group_name = "landfill-SG"
   }
   ```
   et
@@ -199,30 +211,7 @@ par exemple
     landline_ssh -.- output
     landlord -.- output
     landfill -.- output
-  ```
-  
-##### Alternative avec module de la Registry
-  
-  [//]: # ( TODO compléter )
-  ```mermaid
-    graph TD
-    subgraph avant 
-      main.tf{main.tf} --> module_vpc
-    end
-    module_vpc --o cidr>cidr]
-    module_vpc --o private_subnets>_subnet]
-    main.tf -.-> AWS_LANDFILL_CIDR_BLOCK -.-> cidr
-    main.tf -.-> AWS_LANDFILL_SUBNET -.-> private_subnets
-
-    module_vpc --o enable_nat_gateway --o true1[true]
-    module_vpc --o single_nat_gateway --o true2[true]
-    module_vpc --o one_nat_gateway_per_az --o true3[true]
-    module_vpc --o enable_vpn_gateway --o true4[true]
-
-    module_vpc --o manage_default_vpc --o false1[false]
-    module_vpc --o manage_default_network_acl --o false2[false]
-    module_vpc --o manage_default_security_group --o false3[false]
-  ```
+  ```  
 #### wopr
   ```mermaid
     graph TD
