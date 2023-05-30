@@ -43,7 +43,7 @@
   }
   ```
 * lancer ``tf init`` dans ``land`` (*<span style="color:darkgreen">Terraform has been successfully initialized!</span>*)
-* on peut utiliser ``tf fmt`` puis ``tf validate`` avant ``tf apply`` et inspecter ce qu'il ferait
+* on peut utiliser ``tf fmt`` puis ``tf validate`` avant ``tf apply`` ou/et ``tf plan`` et inspecter ce qu'il ferait
 
 ### Terraform plus sérieusement
 * on peut exporter des variables, par exemple depuis ``~/.zprofile``, en les nommant ``TF_VAR_[nom]``
