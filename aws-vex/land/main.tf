@@ -17,6 +17,19 @@ resource "aws_key_pair" "wopr4-vex-key-pair" {
 data "aws_availability_zones" "available" {
   state = "available"
 }
+data "aws_ebs_volumes" "wopr_data" {
+  tags = {
+    role = "wopr-data"
+  }
+  filter {
+    name   = "availability-zone"
+    values = ["${data.aws_availability_zones.available.names[0]}"]
+  }
+  filter {
+    name   = "encrypted"
+    values = ["true"]
+  }
+}
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = ">=4.0.2,<4.1"
@@ -47,6 +60,7 @@ module "vpc" {
 }
 resource "aws_security_group" "landline_ssh" {
   vpc_id = module.vpc.vpc_id
+  name   = "landline_external"
   egress {
     from_port        = 0
     to_port          = 0
@@ -59,11 +73,32 @@ resource "aws_security_group" "landline_ssh" {
     from_port        = 22
     to_port          = 22
     protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"]
+    cidr_blocks      = ["0.0.0.0/0"] # TODO: SECURE_CIDR
     ipv6_cidr_blocks = ["::/0"]
   }
   tags = { name = "landfill" }
 }
+resource "aws_security_group" "landfill_ssh" {
+  vpc_id = module.vpc.vpc_id
+  name   = "landfill_internal"
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = -1
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::1/128"]
+  }
+  ingress {
+    description      = "SSH from inside ipv4"
+    from_port        = 22
+    to_port          = 22
+    protocol         = "tcp"
+    cidr_blocks      = ["${var.AWS_LANDFILL_SUBNET_PRIVE}", "${var.AWS_LANDFILL_SUBNET_PUBLIC}"]
+    ipv6_cidr_blocks = ["::1/128"]
+  }
+  tags = { name = "landfill" }
+}
+
 module "woprPub" {
   source             = "./modules/wopr"
   region             = var.AWS_REGION
@@ -75,8 +110,15 @@ module "woprPriv" {
   source             = "./modules/wopr"
   region             = var.AWS_REGION
   landline_subnet_id = module.vpc.private_subnets[0]
-  landline_sg_ssh_id = aws_security_group.landline_ssh.id
+  landline_sg_ssh_id = aws_security_group.landfill_ssh.id
   key_pair_id        = aws_key_pair.wopr4-vex-key-pair.id
+}
+
+resource "aws_volume_attachment" "ebs_att" {
+  count       = length(data.aws_ebs_volumes.wopr_data.ids[*]) == 1 ? 1 : 0
+  device_name = "/dev/sdm"
+  volume_id   = data.aws_ebs_volumes.wopr_data.ids[0]
+  instance_id = module.woprPriv.wopr4_id
 }
 output "wopr4_public_ip" {
   value = module.woprPub.wopr4_manage_ip
