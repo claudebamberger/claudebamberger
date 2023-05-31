@@ -104,46 +104,77 @@ par exemple
 
   * enfin on fait de même avec la création d'instance (avec son IP de contact)
 
+  * résultat
+    ```
+    ubuntu@ip-192-168-88-26:~$ neofetch
+                  .-/+oossssoo+/-.               ubuntu@ip-192-168-88-26 
+              `:+ssssssssssssssssss+:`           ----------------------- 
+            -+ssssssssssssssssssyyssss+-         OS: Ubuntu 22.04.2 LTS x86_64 
+          .ossssssssssssssssssdMMMNysssso.       Host: HVM domU 4.11.amazon 
+        /ssssssssssshdmmNNmmyNMMMMhssssss/      Kernel: 5.15.0-1031-aws 
+        +ssssssssshmydMMMMMMMNddddyssssssss+     Uptime: 11 mins
+      /sssssssshNMMMyhhyyyyhmNMMMNhssssssss/    Packages: 687 (dpkg), 6 (snap) 
+      .ssssssssdMMMNhsssssssssshNMMMdssssssss.   Shell: bash 5.1.16 
+      +sssshhhyNMMNyssssssssssssyNMMMysssssss+   Terminal: /dev/pts/0 
+      ossyNMMMNyMMhsssssssssssssshmmmhssssssso   CPU: Intel Xeon E5-2676 v3 (1) @ 2.399GHz 
+      ossyNMMMNyMMhsssssssssssssshmmmhssssssso   GPU: 00:02.0 Cirrus Logic GD 5446 
+      +sssshhhyNMMNyssssssssssssyNMMMysssssss+   Memory: 165MiB / 966MiB 
+      .ssssssssdMMMNhsssssssssshNMMMdssssssss.
+      /sssssssshNMMMyhhyyyyhdNMMMNhssssssss/                            
+        +sssssssssdmydMMMMMMMMddddyssssssss+                             
+        /ssssssssssshdmNNNNmyNMMMMhssssss/
+          .ossssssssssssssssssdMMMNysssso.
+            -+sssssssssssssssssyyyssss+-
+              `:+ssssssssssssssssss+:`
+                  .-/+oossssoo+/-.
+    ubuntu@ip-192-168-88-26:~$ 
+    ```
+
 ### Alternative avec module de la Registry
   * on peut remplacer le module "landfill" par un module vpc de la registry
-  ```
-  module "vpc" {
-    source  = "terraform-aws-modules/vpc/aws"
-    version = ">=4.0.2,<4.1"
+    ```
+    …
+    data "aws_availability_zones" "available" {
+      state = "available"
+    }
+    …
+    module "vpc" {
+      source  = "terraform-aws-modules/vpc/aws"
+      version = ">=4.0.2,<4.1"
 
-    tags            = { Environment = "test" }
-    cidr            = var.AWS_LANDFILL_CIDR_BLOCK
-    private_subnets = [ "${var.AWS_LANDFILL_SUBNET_PRIVE}"]
-    public_subnets  = [ "${var.AWS_LANDFILL_SUBNET_PUBLIC}"]
+      tags            = { Environment = "test" }
+      cidr            = var.AWS_LANDFILL_CIDR_BLOCK
+      private_subnets = [ "${var.AWS_LANDFILL_SUBNET_PRIVE}"]
+      public_subnets  = [ "${var.AWS_LANDFILL_SUBNET_PUBLIC}"]
 
-    azs = ["us-east-1a"] # TODO intégrer aux variables
+      azs = ["${data.aws_availability_zones.available.names[0]}"]
 
-    enable_nat_gateway     = true
-    single_nat_gateway     = true
-    one_nat_gateway_per_az = true
-    enable_vpn_gateway     = false
+      enable_nat_gateway     = true
+      single_nat_gateway     = true
+      one_nat_gateway_per_az = true
+      enable_vpn_gateway     = false
 
-    manage_default_vpc            = false
-    manage_default_network_acl    = false
-    manage_default_security_group = false
+      manage_default_vpc            = false
+      manage_default_network_acl    = false
+      manage_default_security_group = false
 
-    name                        = "landfill"
-    default_vpc_name            = "landfill"
-    private_subnet_names        = ["landfill-private"]
-    public_subnet_names         = ["landfill-public"]
-    default_network_acl_name    = "landfill-ACL"
-    default_route_table_name    = "landfill-RT"
-    default_security_group_name = "landfill-SG"
-  }
-  ```
-  et
-  ```
-  module "security-group" {
-    source  = "terraform-aws-modules/security-group/aws"
-    version = "4.17.2"
-  }
-  ```
-  [//]: # ( # TODO migrer le security groupe en module )
+      name                        = "landfill"
+      default_vpc_name            = "landfill"
+      private_subnet_names        = ["landfill-private"]
+      public_subnet_names         = ["landfill-public"]
+      default_network_acl_name    = "landfill-ACL"
+      default_route_table_name    = "landfill-RT"
+      default_security_group_name = "landfill-SG"
+    }
+    ```
+    et
+    ```
+    module "security-group" {
+      source  = "terraform-aws-modules/security-group/aws"
+      version = "4.17.2"
+    }
+    ```
+    [//]: # ( # TODO migrer le security groupe en module )
 ### Documentation des ressources dans l'exemple
 
 #### main  

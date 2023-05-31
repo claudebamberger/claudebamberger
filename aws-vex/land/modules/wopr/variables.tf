@@ -23,12 +23,12 @@ variable "AMI_Ubuntu_LTS22_arm64" {
 variable "public_key_path" {
   description = "chemin de la clé publique (pour la région), exported shell (optional future use)"
   type        = string
-  default = ""
+  default     = ""
 }
 variable "private_key_path" {
   description = "chemin de la clé privée (pour la région), exported shell (optional future use)"
   type        = string
-  default = ""
+  default     = ""
 }
 
 variable "landline_subnet_id" {

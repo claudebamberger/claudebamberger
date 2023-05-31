@@ -14,6 +14,9 @@ resource "aws_key_pair" "wopr4-vex-key-pair" {
   key_name   = "wopr4-vex-key-pair"
   public_key = file(var.AWS_PUBLIC_KEY_PATH)
 }
+data "aws_availability_zones" "available" {
+  state = "available"
+}
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = ">=4.0.2,<4.1"
@@ -23,7 +26,7 @@ module "vpc" {
   private_subnets = ["${var.AWS_LANDFILL_SUBNET_PRIVE}"]
   public_subnets  = ["${var.AWS_LANDFILL_SUBNET_PUBLIC}"]
 
-  azs = ["us-east-1a"] # TODO intégrer aux variables
+  azs = ["${data.aws_availability_zones.available.names[0]}"]
 
   enable_nat_gateway     = true
   single_nat_gateway     = true
