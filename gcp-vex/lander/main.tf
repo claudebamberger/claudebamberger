@@ -64,8 +64,7 @@ resource "google_compute_firewall" "landline" {
   log_config {
     metadata = "INCLUDE_ALL_METADATA"
   }
-  #source_ranges      = ["${var.GCP_SECURE_CIDR}"]
-  source_ranges = ["0.0.0.0/0"]
+  source_ranges = ["${var.GCP_SECURE_CIDR}"]
   target_tags   = ["ssh-admin"]
 }
 resource "google_compute_firewall" "landlineInternal" {
@@ -114,6 +113,7 @@ resource "google_compute_instance" "woprPub" {
     }
     inline = [
       "sudo apt-get update",
+      "sudo echo $(date)> /tmp/provisioner",
     ]
   }
   tags       = ["ssh-admin", "ssh-internal"]
@@ -132,6 +132,23 @@ resource "google_compute_instance" "woprPriv" {
   network_interface {
     subnetwork = google_compute_subnetwork.lander-subnet-private.id
   }
+  metadata = {
+    enable-oslogin = false
+    ssh-keys       = "ansible:${file(var.GCP_PUBLIC_KEY_PATH)}\nmex:${file(var.GCP_PUBLIC_KEY_PATH)}"
+  }
+  provisioner "remote-exec" {
+    connection {
+      # user is added to sudoers (good)
+      host        = google_compute_address.admin-public-ip
+      user        = "ansible"
+      private_key = file(var.GCP_PRIVATE_KEY_PATH)
+      timeout     = "30s"
+    }
+    inline = [
+      "sudo apt-get update",
+      "sudo echo $(date)> /tmp/provisioner",
+    ]
+  }
   tags       = ["ssh-internal"]
   depends_on = [google_compute_firewall.landlineInternal]
 }
@@ -145,9 +162,6 @@ resource "google_compute_attached_disk" "wopr_data" {
   zone        = data.google_compute_disk.wopr_data.zone
 }
 
-output "woprPub" {
-  value = google_compute_instance.woprPub.hostname
-}
 output "publicAdminIp" {
-  value = google_compute_address.admin-public-ip.address
+  value = "ssh -i […] ansible@${google_compute_address.admin-public-ip.address}"
 }
