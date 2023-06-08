@@ -19,6 +19,7 @@ data "google_compute_disk" "wopr_data" {
 data "google_compute_zones" "available" {
   #https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_zones
 }
+# TODO: module https://registry.terraform.io/modules/terraform-google-modules/network/google/latest
 resource "google_compute_network" "lander" {
   name                    = "lander"
   auto_create_subnetworks = false
@@ -75,9 +76,16 @@ resource "google_compute_firewall" "landlineInternal" {
     ports    = ["22"]
     protocol = "tcp"
   }
-  destination_ranges = ["${var.GCP_LANDER_SUBNET_PRIVATE}"]
-  source_ranges      = ["${var.GCP_LANDER_SUBNET_PUBLIC}"]
-  target_tags        = ["ssh-internal"]
+  direction = "INGRESS"
+  source_ranges = [
+    "${var.GCP_LANDER_SUBNET_PUBLIC}",
+    "${var.GCP_LANDER_SUBNET_PRIVATE}"
+  ]
+  log_config {
+    metadata = "INCLUDE_ALL_METADATA"
+
+  }
+  target_tags = ["ssh-internal"]
 }
 
 resource "google_compute_instance" "woprPub" {
@@ -106,13 +114,14 @@ resource "google_compute_instance" "woprPub" {
   provisioner "remote-exec" {
     connection {
       # user is added to sudoers (good)
-      host        = google_compute_address.admin-public-ip
+      host        = google_compute_address.admin-public-ip.address
       user        = "ansible"
       private_key = file(var.GCP_PRIVATE_KEY_PATH)
       timeout     = "30s"
     }
     inline = [
-      "sudo apt-get update",
+      "sudo bash -c 'export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get -yq upgrade'",
+      "sudo bash -c 'export DEBIAN_FRONTEND=noninteractive && apt-get -yq install neofetch'",
       "sudo echo $(date)> /tmp/provisioner",
     ]
   }
@@ -139,13 +148,13 @@ resource "google_compute_instance" "woprPriv" {
   provisioner "remote-exec" {
     connection {
       # user is added to sudoers (good)
-      host        = google_compute_address.admin-public-ip
+      host        = google_compute_address.admin-public-ip.address
       user        = "ansible"
       private_key = file(var.GCP_PRIVATE_KEY_PATH)
       timeout     = "30s"
     }
     inline = [
-      "sudo apt-get update",
+      # pas possible d'accéder à internet depuis priv
       "sudo echo $(date)> /tmp/provisioner",
     ]
   }
@@ -153,15 +162,27 @@ resource "google_compute_instance" "woprPriv" {
   depends_on = [google_compute_firewall.landlineInternal]
 }
 resource "google_compute_attached_disk" "wopr_data" {
-  count       = (data.google_compute_disk.wopr_data.id == null) ? 0 : 1
+  #count       = (data.google_compute_disk.wopr_data.id == null) ? 0 : 1
   disk        = data.google_compute_disk.wopr_data.id
   instance    = google_compute_instance.woprPriv.id
   project     = var.GCP_PROJECT_ID
   mode        = "READ_WRITE"
   device_name = "wopr-data-0"
   zone        = data.google_compute_disk.wopr_data.zone
+  provisioner "remote-exec" {
+    connection {
+      # user is added to sudoers (good)
+      host        = google_compute_address.admin-public-ip.address
+      user        = "ansible"
+      private_key = file(var.GCP_PRIVATE_KEY_PATH)
+      timeout     = "30s"
+    }
+    inline = [
+      # pas possible d'accéder à internet depuis priv
+      "sudo mkdir -p /data && sudo mount /dev/sdb /data",
+    ]
+  }
 }
-
 output "publicAdminIp" {
-  value = "ssh -i […] ansible@${google_compute_address.admin-public-ip.address}"
+  value = "ssh -i […] -A ansible@${google_compute_address.admin-public-ip.address}"
 }

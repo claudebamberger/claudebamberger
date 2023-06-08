@@ -112,4 +112,62 @@
                 `"""
 
   mex@wopr:~$ 
+  ```  
+  
+### Documentation des ressources dans l'exemple
+```mermaid
+    graph LR
+    main.tf --> variables.tf
+    variables.tf --o ProjectID>GCP_PROJECT_ID]
+    variables.tf --o Region>GCP_REGION]
+    variables.tf --o SecureCIDR>GCP_SECURE_CIDR]
+    variables.tf --o PublicCIDR>GCP_LANDER_SUBNET_PUBLIC]
+    variables.tf --o PrivateCIDR>GCP_LANDER_SUBNET_PRIVATE]
+    main.tf -.-> wopr_data
+    wopr_data(google_compute_disk.wopr_data)
+    main.tf -.-> lander
+    lander(google_compute_network.lander)
+    admin-public-ip
+    admin-public-ip(google_compute_address.admin-public-ip)
+    main.tf -.-> lander-subnet-public
+    lander-subnet-public
+    lander-subnet-public(google_compute_subnetwork.lander-subnet-public)
+    lander-subnet-public -.-> PublicCIDR
+    lander-subnet-public -.-> Region
+    lander-subnet-public -.-> lander
+    main.tf -.-> lander-subnet-private
+    lander-subnet-private(google_compute_subnetwork.lander-subnet-private)
+    lander-subnet-private -.-> PrivateCIDR
+    lander-subnet-private -.-> lander
+    lander-subnet-private -.-> Region
+    main.tf -.-> landline
+    landline(google_compute_firewall.landline)
+    landline -.-> lander
+    landline -.-> PublicCIDR
+    landline -.-> SecureCIDR
+    landline -.-> ssh>ssh tcp/22]
+    landline ---> #ssh-admin
+    main.tf -.-> landlineInt
+    landlineInt>google_compute_firewall.landlineInternal]
+    landlineInt -.-> lander
+    landlineInt -.-> PrivateCIDR
+    landlineInt -.-> PublicCIDR
+    landlineInt -.-> ssh>ssh tcp/22]
+    landlineInt ---> #ssh-internal
+    main.tf -.-> woprPub
+    woprPub>google_compute_instance.woprPub]
+    woprPub -.-> lander-subnet-public
+    woprPub -.-> admin-public-ip
+    woprPub -.-> #ssh-admin
+    woprPub -.-> #ssh-internal
+    woprPub --> setup(remote-exec update-upgrade)
+    main.tf -.-> woprPriv
+    woprPriv>google_compute_instance.woprPriv]
+    woprPriv -.-> lander-subnet-private
+    woprPriv --> init(remote-exec mark)
+    
+    woprPriv -.-> #ssh-internal
+    woprPriv -.-> att-wopr-data[google_compute_attached_disk.wopr-data]
+    att-wopr-data --> mount(remote-exec mount)
+    att-wopr-data -.-> wopr_data
   ```
