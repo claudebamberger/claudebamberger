@@ -11,6 +11,8 @@ provider "google" {
   region  = var.GCP_REGION
   //zone    = ""
 }
+
+### DATAs
 data "google_compute_disk" "wopr_data" {
   name    = "wopr-data"
   project = var.GCP_PROJECT_ID
@@ -19,6 +21,10 @@ data "google_compute_disk" "wopr_data" {
 data "google_compute_zones" "available" {
   #https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_zones
 }
+data "google_dns_managed_zone" "env_dns_zone" {
+  name = "gcp-claudebbg-zone"
+}
+### network
 # TODO: module https://registry.terraform.io/modules/terraform-google-modules/network/google/latest
 resource "google_compute_network" "lander" {
   name                    = "lander"
@@ -87,7 +93,7 @@ resource "google_compute_firewall" "landlineInternal" {
   }
   target_tags = ["ssh-internal"]
 }
-
+### instances
 resource "google_compute_instance" "woprPub" {
   description  = "wopr-pub"
   name         = "wopr-pub"
@@ -158,31 +164,24 @@ resource "google_compute_instance" "woprPriv" {
       "sudo echo $(date)> /tmp/provisioner",
     ]
   }
+  attached_disk {
+    mode        = "READ_WRITE"
+    device_name = "wopr-data-0"
+    source      = data.google_compute_disk.wopr_data.id
+
+  }
   tags       = ["ssh-internal"]
   depends_on = [google_compute_firewall.landlineInternal]
 }
-resource "google_compute_attached_disk" "wopr_data" {
-  #count       = (data.google_compute_disk.wopr_data.id == null) ? 0 : 1
-  disk        = data.google_compute_disk.wopr_data.id
-  instance    = google_compute_instance.woprPriv.id
-  project     = var.GCP_PROJECT_ID
-  mode        = "READ_WRITE"
-  device_name = "wopr-data-0"
-  zone        = data.google_compute_disk.wopr_data.zone
-  provisioner "remote-exec" {
-    connection {
-      # user is added to sudoers (good)
-      host        = google_compute_address.admin-public-ip.address
-      user        = "ansible"
-      private_key = file(var.GCP_PRIVATE_KEY_PATH)
-      timeout     = "30s"
-    }
-    inline = [
-      # pas possible d'accéder à internet depuis priv
-      "sudo mkdir -p /data && sudo mount /dev/sdb /data",
-    ]
-  }
+### DNS registration
+resource "google_dns_record_set" "dns" {
+  name         = "wopr.${data.google_dns_managed_zone.env_dns_zone.dns_name}"
+  type         = "A"
+  ttl          = 300
+  managed_zone = data.google_dns_managed_zone.env_dns_zone.name
+  rrdatas      = ["${google_compute_address.admin-public-ip.address}"]
 }
+### Output
 output "publicAdminIp" {
-  value = "ssh -i […] -A ansible@${google_compute_address.admin-public-ip.address}"
+  value = "ssh-agent && ssh-add […] ssh -A ansible@wopr.gcp.claudebbg.com"
 }
