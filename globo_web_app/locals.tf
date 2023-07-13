@@ -5,9 +5,12 @@ locals {
     project      = "${var.COMPANY}-${var.PROJECT}"
     billing_code = var.BILLING_CODE
   }
-  rogers = "globo-web-app-${random_integer.rogers.result}"
+  rogers = "globo-web-app-${random_integer.random-rogers.result}"
 }
-resource "random_integer" "rogers" {
+resource "random_integer" "random-rogers" {
   min = 10000
   max = 99999
+  keepers = {
+    version = 6.0
+  }
 }

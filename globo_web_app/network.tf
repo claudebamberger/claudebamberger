@@ -12,31 +12,28 @@ data "aws_availability_zones" "azs" {
 resource "aws_vpc" "app" {
   cidr_block           = format("%s/%s", var.vpc_netcidr, var.vpc_netsize)
   enable_dns_hostnames = true
+  tags                 = local.common_tags
 }
 
 resource "aws_internet_gateway" "app" {
   vpc_id = aws_vpc.app.id
+  tags   = local.common_tags
 }
 
-resource "aws_subnet" "public_subnet1" {
-  cidr_block              = var.public_netcidr[0]
+resource "aws_subnet" "public_subnet" {
+  cidr_block              = cidrsubnet(aws_vpc.app.cidr_block, 8, count.index + 1)
+  vpc_id                  = aws_vpc.app.id
+  availability_zone       = data.aws_availability_zones.azs.names[count.index + 1 % length(data.aws_availability_zones.azs)]
+  map_public_ip_on_launch = true
+  tags                    = local.common_tags
+  count                   = var.web-intances
+}
+resource "aws_subnet" "public_subnetA" {
+  cidr_block              = cidrsubnet(aws_vpc.app.cidr_block, 8, 0)
   vpc_id                  = aws_vpc.app.id
   availability_zone       = data.aws_availability_zones.azs.names[0]
   map_public_ip_on_launch = true
-}
-
-resource "aws_subnet" "public_subnet2" {
-  cidr_block              = var.public_netcidr[1]
-  vpc_id                  = aws_vpc.app.id
-  availability_zone       = data.aws_availability_zones.azs.names[1]
-  map_public_ip_on_launch = true
-}
-
-resource "aws_subnet" "public_subnetA" {
-  cidr_block              = var.public_netcidr[2]
-  vpc_id                  = aws_vpc.app.id
-  availability_zone       = data.aws_availability_zones.azs.names[2]
-  map_public_ip_on_launch = true
+  tags                    = local.common_tags
 }
 
 # ROUTING #
@@ -46,18 +43,14 @@ resource "aws_route_table" "app" {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.app.id
   }
+  tags = local.common_tags
 }
 
-resource "aws_route_table_association" "app_subnet1" {
-  subnet_id      = aws_subnet.public_subnet1.id
+resource "aws_route_table_association" "app_subnet" {
+  subnet_id      = aws_subnet.public_subnet[count.index].id
   route_table_id = aws_route_table.app.id
+  count          = var.web-intances
 }
-
-resource "aws_route_table_association" "app_subnet2" {
-  subnet_id      = aws_subnet.public_subnet2.id
-  route_table_id = aws_route_table.app.id
-}
-
 resource "aws_route_table_association" "app_subnetA" {
   subnet_id      = aws_subnet.public_subnetA.id
   route_table_id = aws_route_table.app.id
@@ -74,7 +67,6 @@ resource "aws_security_group" "nginx_sg" {
     protocol    = "tcp"
     cidr_blocks = [aws_vpc.app.cidr_block]
   }
-
   # outbound internet access
   egress {
     from_port   = 0
@@ -82,6 +74,7 @@ resource "aws_security_group" "nginx_sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  tags = local.common_tags
 }
 # LB Securiy group
 resource "aws_security_group" "nginx_albsg" {
@@ -94,7 +87,6 @@ resource "aws_security_group" "nginx_albsg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
   # outbound internet access
   egress {
     from_port   = 0
@@ -102,6 +94,7 @@ resource "aws_security_group" "nginx_albsg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  tags = local.common_tags
 }
 
 # admin security groups
@@ -115,7 +108,6 @@ resource "aws_security_group" "nginx_admin" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
   # outbound internet access
   egress {
     from_port   = 0
@@ -123,6 +115,7 @@ resource "aws_security_group" "nginx_admin" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  tags = local.common_tags
 }
 
 resource "aws_security_group" "admin_nginx" {
@@ -133,9 +126,8 @@ resource "aws_security_group" "admin_nginx" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["${var.public_netcidr[2]}"]
+    cidr_blocks = ["${cidrsubnet(aws_vpc.app.cidr_block, 8, 0)}"]
   }
-
   # outbound internet access
   egress {
     from_port   = 0
@@ -143,4 +135,5 @@ resource "aws_security_group" "admin_nginx" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  tags = local.common_tags
 }

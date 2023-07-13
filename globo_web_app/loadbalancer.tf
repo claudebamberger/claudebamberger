@@ -11,11 +11,12 @@ data "aws_elb_service_account" "root" {}
 # LB #
 # aws_lb
 resource "aws_lb" "globolb" {
-  name                       = "GloboWeb-lb"
-  internal                   = false
-  load_balancer_type         = "application"
-  security_groups            = [aws_security_group.nginx_albsg.id]
-  subnets                    = [aws_subnet.public_subnet1.id, aws_subnet.public_subnet2.id]
+  name               = "GloboWeb-lb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.nginx_albsg.id]
+  subnets            = [for s in aws_subnet.public_subnet : s.id]
+  # or aws_subnet.public_subnet[*].id
   enable_deletion_protection = false
   depends_on                 = [aws_s3_bucket_policy.buckpolicy]
   access_logs {
@@ -45,13 +46,9 @@ resource "aws_lb_listener" "front_end" {
   }
 }
 # aws_lb_target_group_attachement
-resource "aws_lb_target_group_attachment" "globo_attach1" {
+resource "aws_lb_target_group_attachment" "globo_attach" {
   target_group_arn = aws_lb_target_group.globolbtg.arn
-  target_id        = aws_instance.nginx1.id
+  target_id        = aws_instance.nginx[count.index].id
   port             = 80
-}
-resource "aws_lb_target_group_attachment" "globo_attach2" {
-  target_group_arn = aws_lb_target_group.globolbtg.arn
-  target_id        = aws_instance.nginx2.id
-  port             = 80
+  count            = var.web-intances
 }

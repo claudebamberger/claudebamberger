@@ -32,12 +32,20 @@ variable "vpc_netcidr" {
 variable "vpc_netsize" {
   type        = number
   description = "size of vpc network"
-  default     = 16
+  default     = 20
+  validation {
+    condition     = (var.vpc_netsize >= 8) && (var.vpc_netsize <= 20)
+    error_message = "vpc netsize should be between 8 and 20"
+  }
 }
-variable "public_netcidr" {
-  type        = list(string)
-  description = "beginning of subnets (inside vpc network)"
-  default     = ["10.0.1.0/24", "10.0.2.0/24", "10.0.0.0/24"]
+variable "web-intances" {
+  type        = number
+  description = "number of web-server instances from 0 to 253"
+  default     = 2
+  validation {
+    condition     = (var.web-intances <= 253) && (var.web-intances >= 0)
+    error_message = "web-server intances count should be between 0 and 253"
+  }
 }
 variable "instance_type" {
   type        = string
