@@ -103,6 +103,7 @@ module "woprPub" {
   source             = "./modules/wopr"
   region             = var.AWS_REGION
   landline_subnet_id = module.vpc.public_subnets[0]
+  name               = "pub"
   landline_sg_ssh_id = aws_security_group.landline_ssh.id
   key_pair_id        = aws_key_pair.wopr4-vex-key-pair.id
 }
@@ -110,6 +111,7 @@ module "woprPriv" {
   source             = "./modules/wopr"
   region             = var.AWS_REGION
   landline_subnet_id = module.vpc.private_subnets[0]
+  name               = "priv"
   landline_sg_ssh_id = aws_security_group.landfill_ssh.id
   key_pair_id        = aws_key_pair.wopr4-vex-key-pair.id
 }

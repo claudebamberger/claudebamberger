@@ -11,7 +11,7 @@ resource "aws_instance" "wopr4" {
   # the Public SSH key
   key_name = var.key_pair_id
   tags = {
-    name = "wopr"
+    name = "wopr-${var.name}"
   }
   #connection { # inutile avec keyname…
   #  user        = "ubuntu"

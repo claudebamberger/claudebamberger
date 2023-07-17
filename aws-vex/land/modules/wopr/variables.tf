@@ -2,6 +2,32 @@ variable "region" {
   description = "région AWS visée, exported shell"
   type        = string
 }
+variable "name" {
+  description = "nom à utiliser a minima dans les tags"
+  type        = string
+}
+variable "landline_subnet_id" {
+  description = "le subnet dans lequel spawner l'instance"
+  type        = string
+}
+variable "landline_sg_ssh_id" {
+  description = "le security groupe pour ssh from outside"
+  type        = string
+}
+variable "key_pair_id" {
+  description = "l'ID de la paire de clé ssh pour entrer (et sortir en fait)"
+  type        = string
+}
+variable "public_key_path" {
+  description = "chemin de la clé publique (pour la région), exported shell (optional future use)"
+  type        = string
+  default     = "future use"
+}
+variable "private_key_path" {
+  description = "chemin de la clé privée (pour la région), exported shell (optional future use)"
+  type        = string
+  default     = "future use"
+}
 variable "AMI_Ubuntu_LTS22_x86" {
   type        = map(string)
   description = "AMI pour Ubuntu LTS 22.04 sur x86"
@@ -19,29 +45,4 @@ variable "AMI_Ubuntu_LTS22_arm64" {
     eu-central-1 = "ami-07625524674f7c390"
     eu-west-3    = "ami-0bd3b255f1beeae5e"
   }
-}
-variable "public_key_path" {
-  description = "chemin de la clé publique (pour la région), exported shell (optional future use)"
-  type        = string
-  default     = ""
-}
-variable "private_key_path" {
-  description = "chemin de la clé privée (pour la région), exported shell (optional future use)"
-  type        = string
-  default     = ""
-}
-
-variable "landline_subnet_id" {
-  description = "le subnet dans lequel spawner l'instance"
-  type        = string
-}
-
-variable "landline_sg_ssh_id" {
-  description = "le security groupe pour ssh from outside"
-  type        = string
-}
-
-variable "key_pair_id" {
-  description = "l'ID de la paire de clé ssh pour entrer (et sortir en fait)"
-  type        = string
 }
