@@ -69,11 +69,12 @@ resource "aws_security_group" "landline_ssh" {
     ipv6_cidr_blocks = ["::/0"]
   }
   ingress {
-    description      = "SSH from outside"
-    from_port        = 22
-    to_port          = 22
-    protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"] # TODO: SECURE_CIDR
+    description = "SSH from outside"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    #cidr_blocks      = ["0.0.0.0/0"]
+    cidr_blocks      = ["${var.AWS_SECURE_CIDR}"]
     ipv6_cidr_blocks = ["::/0"]
   }
   tags = { name = "landfill" }
@@ -115,7 +116,20 @@ module "woprPriv" {
   landline_sg_ssh_id = aws_security_group.landfill_ssh.id
   key_pair_id        = aws_key_pair.wopr4-vex-key-pair.id
 }
-
+resource "aws_route53_zone" "primary" {
+  name = var.AWS_MYDOMAIN
+}
+resource "aws_route53_record" "wopr-ssh" {
+  zone_id = aws_route53_zone.primary.zone_id
+  weighted_routing_policy {
+    weight = 1
+  }
+  name           = "aws.${var.AWS_MYDOMAIN}"
+  type           = "A"
+  ttl            = 300
+  set_identifier = "aws"
+  records        = [module.woprPub.wopr4_manage_ip]
+}
 resource "aws_volume_attachment" "ebs_att" {
   count       = length(data.aws_ebs_volumes.wopr_data.ids[*]) == 1 ? 1 : 0
   device_name = "/dev/sdm"
@@ -123,8 +137,15 @@ resource "aws_volume_attachment" "ebs_att" {
   instance_id = module.woprPriv.wopr4_id
 }
 output "wopr4_public_ip" {
-  value = module.woprPub.wopr4_manage_ip
+  value = "${module.woprPub.wopr4_manage_ip}"
+}
+output "wopr4priv_internal_ip" {
+  value = module.woprPriv.wopr4_internal_ip
 }
 output "wopr4_manage_pubkey" {
   value = aws_key_pair.wopr4-vex-key-pair.public_key
+}
+output "domain_name_servers" {
+  description = "NameServers vs ns-640.awsdns-16.net & ns-1077.awsdns-06.org"
+  value       = aws_route53_zone.primary.name_servers
 }

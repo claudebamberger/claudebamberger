@@ -7,6 +7,11 @@ variable "AWS_SECURE_CIDR" {
   type        = string
   sensitive   = true
 }
+variable "AWS_MYDOMAIN" {
+  description = "Domaine racine des noms publics"
+  type        = string
+  sensitive   = true
+}
 variable "AWS_PUBLIC_KEY_PATH" {
   description = "chemin de la clé publique (pour la région), exported shell"
   type        = string
