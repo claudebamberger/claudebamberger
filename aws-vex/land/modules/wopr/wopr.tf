@@ -21,6 +21,7 @@ resource "aws_instance" "wopr4" {
   #}
 }
 resource "aws_eip" "landip" {
+  # TODO: count 0 si var.associate_public_ip_address false
   vpc      = true
   instance = aws_instance.wopr4.id
 }
