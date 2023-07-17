@@ -5,8 +5,9 @@ resource "aws_instance" "wopr4" {
   instance_type = "t2.micro"
   # VPC
   subnet_id = var.landline_subnet_id
+  associate_public_ip_address = var.associate_public_ip_address
   # Security Group
-  vpc_security_group_ids = [var.landline_sg_ssh_id]
+  vpc_security_group_ids = var.landline_sg_ids
   # not in VPC security_groups = [var.landline_sg_ssh_id]
   # TODO: private_dns_name_options et private_dns
   # the Public SSH key
@@ -23,4 +24,3 @@ resource "aws_eip" "landip" {
   vpc      = true
   instance = aws_instance.wopr4.id
 }
-

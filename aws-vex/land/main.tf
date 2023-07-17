@@ -1,15 +1,6 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 4.16"
-    }
-  }
-  required_version = ">= 1.2.0"
-}
-provider "aws" {
-  region = var.AWS_REGION
-}
+##########
+### DATA
+##########
 resource "aws_key_pair" "wopr4-vex-key-pair" {
   key_name   = "wopr4-vex-key-pair"
   public_key = file(var.AWS_PUBLIC_KEY_PATH)
@@ -30,6 +21,9 @@ data "aws_ebs_volumes" "wopr_data" {
     values = ["true"]
   }
 }
+##########
+### VPC
+##########
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = ">=4.0.2,<4.1"
@@ -41,7 +35,7 @@ module "vpc" {
 
   azs = ["${data.aws_availability_zones.available.names[0]}"]
 
-  enable_nat_gateway     = true
+  enable_nat_gateway     = false
   single_nat_gateway     = true
   one_nat_gateway_per_az = true
   enable_vpn_gateway     = false
@@ -58,7 +52,11 @@ module "vpc" {
   default_route_table_name    = "landfill-RT"
   default_security_group_name = "landfill-SG"
 }
+##########
+### Network security
+##########
 resource "aws_security_group" "landline_ssh" {
+  # access from outside (only ssh)
   vpc_id = module.vpc.vpc_id
   name   = "landline_external"
   egress {
@@ -75,11 +73,12 @@ resource "aws_security_group" "landline_ssh" {
     protocol    = "tcp"
     #cidr_blocks      = ["0.0.0.0/0"]
     cidr_blocks      = ["${var.AWS_SECURE_CIDR}"]
-    ipv6_cidr_blocks = ["::/0"]
+    ipv6_cidr_blocks = ["::1/128"]
   }
-  tags = { name = "landfill" }
+  tags = { name = "landline" }
 }
 resource "aws_security_group" "landfill_ssh" {
+  # access ONLY from inside (and only ssh)
   vpc_id = module.vpc.vpc_id
   name   = "landfill_internal"
   egress {
@@ -97,25 +96,55 @@ resource "aws_security_group" "landfill_ssh" {
     cidr_blocks      = ["${var.AWS_LANDFILL_SUBNET_PRIVE}", "${var.AWS_LANDFILL_SUBNET_PUBLIC}"]
     ipv6_cidr_blocks = ["::1/128"]
   }
-  tags = { name = "landfill" }
+  tags = { name = "landfill_ssh" }
 }
-
+resource "aws_security_group" "landfill_proxy" {
+  # access ONLY from inside (and only proxy)
+  vpc_id = module.vpc.vpc_id
+  name   = "landfill_proxy"
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = -1
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::1/128"]
+  }
+  ingress {
+    description      = "TinyProxy from inside ipv4"
+    from_port        = 8888
+    to_port          = 8888
+    protocol         = "tcp"
+    cidr_blocks      = ["${var.AWS_LANDFILL_SUBNET_PRIVE}", "${var.AWS_LANDFILL_SUBNET_PUBLIC}"]
+    ipv6_cidr_blocks = ["::1/128"]
+  }
+  tags = { name = "landfill_proxy" }
+}
+##########
+### Instances
+##########
 module "woprPub" {
-  source             = "./modules/wopr"
-  region             = var.AWS_REGION
-  landline_subnet_id = module.vpc.public_subnets[0]
-  name               = "pub"
-  landline_sg_ssh_id = aws_security_group.landline_ssh.id
-  key_pair_id        = aws_key_pair.wopr4-vex-key-pair.id
+  source                      = "./modules/wopr"
+  region                      = var.AWS_REGION
+  landline_subnet_id          = module.vpc.public_subnets[0]
+  associate_public_ip_address = true
+  name                        = "pub"
+  landline_sg_ids             = [aws_security_group.landline_ssh.id, aws_security_group.landfill_proxy.id]
+  key_pair_id                 = aws_key_pair.wopr4-vex-key-pair.id
 }
 module "woprPriv" {
-  source             = "./modules/wopr"
-  region             = var.AWS_REGION
-  landline_subnet_id = module.vpc.private_subnets[0]
-  name               = "priv"
-  landline_sg_ssh_id = aws_security_group.landfill_ssh.id
-  key_pair_id        = aws_key_pair.wopr4-vex-key-pair.id
+  # TODO: https://doc.ubuntu-fr.org/tinyproxy
+  # TODO: https://doc.ubuntu-fr.org/proxy_terminal
+  source                      = "./modules/wopr"
+  region                      = var.AWS_REGION
+  landline_subnet_id          = module.vpc.private_subnets[0]
+  associate_public_ip_address = false
+  name                        = "priv"
+  landline_sg_ids             = [aws_security_group.landfill_ssh.id]
+  key_pair_id                 = aws_key_pair.wopr4-vex-key-pair.id
 }
+##########
+### DNS
+##########
 resource "aws_route53_zone" "primary" {
   name = var.AWS_MYDOMAIN
 }
@@ -130,14 +159,22 @@ resource "aws_route53_record" "wopr-ssh" {
   set_identifier = "aws"
   records        = [module.woprPub.wopr4_manage_ip]
 }
+##########
+### Volume attachement
+### NB fdisk -l 
+##########
 resource "aws_volume_attachment" "ebs_att" {
+  # TODO: https://doc.ubuntu-fr.org/mount_fstab
   count       = length(data.aws_ebs_volumes.wopr_data.ids[*]) == 1 ? 1 : 0
   device_name = "/dev/sdm"
   volume_id   = data.aws_ebs_volumes.wopr_data.ids[0]
   instance_id = module.woprPriv.wopr4_id
 }
+##########
+### Outputs (readable)
+##########
 output "wopr4_public_ip" {
-  value = "${module.woprPub.wopr4_manage_ip}"
+  value = module.woprPub.wopr4_manage_ip
 }
 output "wopr4priv_internal_ip" {
   value = module.woprPriv.wopr4_internal_ip

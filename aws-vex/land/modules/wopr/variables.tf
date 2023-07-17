@@ -10,9 +10,13 @@ variable "landline_subnet_id" {
   description = "le subnet dans lequel spawner l'instance"
   type        = string
 }
-variable "landline_sg_ssh_id" {
-  description = "le security groupe pour ssh from outside"
-  type        = string
+variable "associate_public_ip_address" {
+  description = "lui faut-il une IP publique"
+  type        = bool
+}
+variable "landline_sg_ids" {
+  description = "les security groupes from outside"
+  type        = set(string)
 }
 variable "key_pair_id" {
   description = "l'ID de la paire de clé ssh pour entrer (et sortir en fait)"
