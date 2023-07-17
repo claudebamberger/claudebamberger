@@ -1,23 +1,23 @@
 variable "COMPANY" {
   type        = string
   description = "Company name"
-  #default    = "Globomantics"
+  default     = "Globomantics"
 }
 variable "PROJECT" {
   type        = string
   description = "project name"
-  #default    = "Globo Website"
+  default     = "Globo Website"
 }
 variable "BILLING_CODE" {
   type        = string
   description = "billing in Globo"
-  #default    = "#2652"
-  sensitive = true
+  default     = "G1080"
+  sensitive   = true
 }
 variable "AWS_REGION" {
   type        = string
   description = "the AWS region to target, set a TF_VAR_AWS_REGION for that"
-  #default     = "us-east-1"
+  default     = "us-east-1"
 }
 variable "AWS_PUBLIC_KEY_PATH" {
   type        = string

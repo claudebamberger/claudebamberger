@@ -7,7 +7,7 @@ output "public_hostname" {
   description = "Public Hostname"
 }
 output "admin_gateway" {
-  value       = "ssh-agent ; ssh-agent add ${var.AWS_PUBLIC_KEY_PATH} ; ssh -A ec2-user@${aws_instance.admin.public_ip}"
+  value       = "ssh-agent ; ssh-add ... ; ssh -A ec2-user@${aws_instance.admin.public_ip}"
   description = "Admin gateway"
 }
 output "web-servers" {

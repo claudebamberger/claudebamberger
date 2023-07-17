@@ -5,6 +5,8 @@ locals {
     project      = "${var.COMPANY}-${var.PROJECT}"
     billing_code = var.BILLING_CODE
   }
+  main_cidr = format("%s/%s", var.vpc_netcidr, var.vpc_netsize)
+
   rogers = "globo-web-app-${random_integer.random-rogers.result}"
 }
 resource "random_integer" "random-rogers" {

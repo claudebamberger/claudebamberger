@@ -15,12 +15,12 @@ resource "aws_lb" "globolb" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.nginx_albsg.id]
-  subnets            = [for s in aws_subnet.public_subnet : s.id]
+  subnets            = slice(module.vpc.public_subnets, 1, length(module.vpc.public_subnets))
   # or aws_subnet.public_subnet[*].id
   enable_deletion_protection = false
-  depends_on                 = [aws_s3_bucket_policy.buckpolicy]
+  depends_on                 = [module.s3_buckets.buck_policy]
   access_logs {
-    bucket  = aws_s3_bucket.buck.bucket
+    bucket  = module.s3_buckets.buck.id
     prefix  = "alb-logs"
     enabled = true
   }
@@ -31,7 +31,7 @@ resource "aws_lb_target_group" "globolbtg" {
   name     = "lgobolbtg"
   port     = 80
   protocol = "HTTP"
-  vpc_id   = aws_vpc.app.id
+  vpc_id   = module.vpc.vpc_id
   tags     = local.common_tags
 }
 # aws_lb_listener
