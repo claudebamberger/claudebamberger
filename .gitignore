@@ -4,6 +4,8 @@
 *.tfstate
 *.tfstate.*
 *~
+Deep-Dive-Terraform-docs/
+Deep-Dive-Terraform/
 Getting-Started-Terraform-pluralsignt/
 getting-started-terraform-pluralsight-docs/
 terraform-labs-udemy/
