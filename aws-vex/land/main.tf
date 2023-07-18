@@ -39,7 +39,9 @@ module "vpc" {
   single_nat_gateway     = true
   one_nat_gateway_per_az = true
   enable_vpn_gateway     = false
-  
+  enable_dns_hostnames   = true
+
+  map_public_ip_on_launch       = false
   manage_default_vpc            = false
   manage_default_network_acl    = false
   manage_default_security_group = false
@@ -134,10 +136,11 @@ module "woprPub" {
 module "woprPriv" {
   # TODO: https://doc.ubuntu-fr.org/tinyproxy
   # TODO: https://doc.ubuntu-fr.org/proxy_terminal
-  source                      = "./modules/wopr"
-  region                      = var.AWS_REGION
-  landline_subnet_id          = module.vpc.private_subnets[0]
-  associate_public_ip_address = true
+  source             = "./modules/wopr"
+  region             = var.AWS_REGION
+  landline_subnet_id = module.vpc.private_subnets[0]
+  # TODO: probleme si false, associe quand meme
+  associate_public_ip_address = false
   name                        = "priv"
   landline_sg_ids             = [aws_security_group.landfill_ssh.id]
   key_pair_id                 = aws_key_pair.wopr4-vex-key-pair.id
