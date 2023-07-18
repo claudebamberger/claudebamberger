@@ -39,7 +39,7 @@ module "vpc" {
   single_nat_gateway     = true
   one_nat_gateway_per_az = true
   enable_vpn_gateway     = false
-
+  
   manage_default_vpc            = false
   manage_default_network_acl    = false
   manage_default_security_group = false
@@ -137,7 +137,7 @@ module "woprPriv" {
   source                      = "./modules/wopr"
   region                      = var.AWS_REGION
   landline_subnet_id          = module.vpc.private_subnets[0]
-  associate_public_ip_address = false
+  associate_public_ip_address = true
   name                        = "priv"
   landline_sg_ids             = [aws_security_group.landfill_ssh.id]
   key_pair_id                 = aws_key_pair.wopr4-vex-key-pair.id

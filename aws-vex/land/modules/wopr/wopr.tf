@@ -5,6 +5,7 @@ resource "aws_instance" "wopr4" {
   instance_type = "t2.micro"
   # VPC
   subnet_id = var.landline_subnet_id
+  # TODO: comprendre pourquoi il associe de toutes façon une IP publique au final
   associate_public_ip_address = var.associate_public_ip_address
   # Security Group
   vpc_security_group_ids = var.landline_sg_ids
@@ -22,6 +23,7 @@ resource "aws_instance" "wopr4" {
 }
 resource "aws_eip" "landip" {
   # TODO: count 0 si var.associate_public_ip_address false
+  count    = var.associate_public_ip_address ? 1 : 0
   vpc      = true
   instance = aws_instance.wopr4.id
 }
