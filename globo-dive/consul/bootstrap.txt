@@ -1,0 +1,20 @@
+AccessorID:       9721fb02-70dc-2f7d-7306-cae2af8f66d0
+SecretID:         015d9f7a-3d84-1476-aeaf-3c2c2f21d5da
+Description:      Bootstrap Token (Global Management)
+Local:            false
+Create Time:      2023-07-18 16:44:41.867952 +0200 CEST
+Policies:
+   00000000-0000-0000-0000-000000000001 - global-management
+
+$ export CONSUL_HTTP_TOKEN=015d9f7a-3d84-1476-aeaf-3c2c2f21d5da
+
+mary_token_accessor_id = "8d286892-48df-2845-cb27-a7a8c9e86b73"
+sally_token_accessor_id = "366def06-ff46-eb50-9c01-56dcd14f1bd2"
+
+MARY
+consul acl token read -id 8d286892-48df-2845-cb27-a7a8c9e86b73
+   secret : a8a7235f-0851-a2e5-b4b3-d5812ab5ca6a
+
+SALLY
+consul acl token read -id 366def06-ff46-eb50-9c01-56dcd14f1bd2
+   secret : e9c67793-db14-a1d3-1014-9888dee3689f
