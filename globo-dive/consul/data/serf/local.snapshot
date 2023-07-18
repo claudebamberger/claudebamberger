@@ -1,3 +1,5 @@
 alive: vex2.local 127.0.0.1:8301
 alive: vex2.local 127.0.0.1:8301
 event-clock: 1
+alive: vex2.local 127.0.0.1:8301
+event-clock: 2
