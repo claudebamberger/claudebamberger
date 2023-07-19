@@ -1,0 +1,3 @@
+%{ for block, nbr in { [ cidr, range(nb) ] }  ~}
+cidrsubnet(${block},8,${nbr})
+%{ endfor ~}

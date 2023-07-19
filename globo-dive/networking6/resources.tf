@@ -38,7 +38,7 @@ data "aws_availability_zones" "available" {}
 data "consul_keys" "networking" {
   key {
     name = "networking"
-    path = "networking/configuration/globo-primary/net_info"
+    path = terraform.workspace == "default" ? "networking/configuration/globo-primary/net_info" : "networking/configuration/globo-primary/${terraform.workspace}/net_info"
   }
 
   key {
@@ -54,7 +54,11 @@ data "consul_keys" "networking" {
 locals {
   cidr_block   = jsondecode(data.consul_keys.networking.var.networking)["cidr_block"]
   subnet_count = jsondecode(data.consul_keys.networking.var.networking)["subnet_count"]
-  common_tags  = jsondecode(data.consul_keys.networking.var.common_tags)
+  common_tags = merge(jsondecode(data.consul_keys.networking.var.common_tags),
+    {
+      Environment = terraform.workspace
+    }
+  )
 }
 
 ##################################################################################
@@ -66,32 +70,23 @@ module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~>2.0"
 
-  name = "globo-primary"
+  name = "globo-primary-${terraform.workspace}"
 
   cidr            = local.cidr_block
   azs             = slice(data.aws_availability_zones.available.names, 0, local.subnet_count)
   #private_subnets = data.template_file.private_cidrsubnet.*.rendered
-  private_subnets = templatefile("${path.module}/subnet.tftpl", {
-      vpc_cidr = local.cidr_block, 
-      current_count = count.index + 10
-    }
-  )
-  #public_subnets  = data.template_file.public_cidrsubnet.*.rendered
-  public_subnets = templatefile("${path.module}/subnet.tftpl", {
-      vpc_cidr = local.cidr_block, 
-      current_count = count.index
-    }
-  )
-  enable_nat_gateway = false
+  #private_subnets = ["10.0.10.0/24", "10.0.11.0/24"]
+  private_subnets = [ for off in range(local.subnet_count) : cidrsubnet(local.cidr_block,8,off+10) ]
+  #private_subnets = templatefile("${path.module}/subnet.tftpl", { cidr = local.cidr_block, nb = local.subnet_count } )
+  #public_subnets =  ["10.0.0.0/24", "10.0.1.0/24"]
+  public_subnets =  [ for off in range(local.subnet_count) : cidrsubnet(local.cidr_block,8,off) ]
+    #templatefile("${path.module}/subnet.tftpl", {
+    #  cidr_block = local.cidr_block, offset = 0, nb = local.subnet_count
+    #}
+    #)
+  enable_nat_gateway = true
 
   create_database_subnet_group = false
 
-
   tags = local.common_tags
 }
-
-
-
-
-
-
