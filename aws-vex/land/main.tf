@@ -1,27 +1,4 @@
 ##########
-### DATA
-##########
-resource "aws_key_pair" "wopr4-vex-key-pair" {
-  key_name   = "wopr4-vex-key-pair"
-  public_key = file(var.AWS_PUBLIC_KEY_PATH)
-}
-data "aws_availability_zones" "available" {
-  state = "available"
-}
-data "aws_ebs_volumes" "wopr_data" {
-  tags = {
-    role = "wopr-data"
-  }
-  filter {
-    name   = "availability-zone"
-    values = ["${data.aws_availability_zones.available.names[0]}"]
-  }
-  filter {
-    name   = "encrypted"
-    values = ["true"]
-  }
-}
-##########
 ### VPC
 ##########
 module "vpc" {
@@ -55,73 +32,6 @@ module "vpc" {
   default_security_group_name = "landfill-SG"
 }
 ##########
-### Network security
-##########
-resource "aws_security_group" "landline_ssh" {
-  # access from outside (only ssh)
-  vpc_id = module.vpc.vpc_id
-  name   = "landline_external"
-  egress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = -1
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
-  }
-  ingress {
-    description = "SSH from outside"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    #cidr_blocks      = ["0.0.0.0/0"]
-    cidr_blocks      = ["${var.AWS_SECURE_CIDR}"]
-    ipv6_cidr_blocks = ["::1/128"]
-  }
-  tags = { name = "landline" }
-}
-resource "aws_security_group" "landfill_ssh" {
-  # access ONLY from inside (and only ssh)
-  vpc_id = module.vpc.vpc_id
-  name   = "landfill_internal"
-  egress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = -1
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::1/128"]
-  }
-  ingress {
-    description      = "SSH from inside ipv4"
-    from_port        = 22
-    to_port          = 22
-    protocol         = "tcp"
-    cidr_blocks      = ["${var.AWS_LANDFILL_SUBNET_PRIVE}", "${var.AWS_LANDFILL_SUBNET_PUBLIC}"]
-    ipv6_cidr_blocks = ["::1/128"]
-  }
-  tags = { name = "landfill_ssh" }
-}
-resource "aws_security_group" "landfill_proxy" {
-  # access ONLY from inside (and only proxy)
-  vpc_id = module.vpc.vpc_id
-  name   = "landfill_proxy"
-  egress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = -1
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::1/128"]
-  }
-  ingress {
-    description      = "TinyProxy from inside ipv4"
-    from_port        = 8888
-    to_port          = 8888
-    protocol         = "tcp"
-    cidr_blocks      = ["${var.AWS_LANDFILL_SUBNET_PRIVE}", "${var.AWS_LANDFILL_SUBNET_PUBLIC}"]
-    ipv6_cidr_blocks = ["::1/128"]
-  }
-  tags = { name = "landfill_proxy" }
-}
-##########
 ### Instances
 ##########
 module "woprPub" {
@@ -144,6 +54,8 @@ module "woprPriv" {
   name                        = "priv"
   landline_sg_ids             = [aws_security_group.landfill_ssh.id]
   key_pair_id                 = aws_key_pair.wopr4-vex-key-pair.id
+
+  depends_on = [ module.woprPub ]
 }
 ##########
 ### DNS

@@ -20,9 +20,18 @@ resource "aws_instance" "wopr4" {
   #  user        = "ubuntu"
   #  private_key = file("var.private_key_path")
   #}
+  #autre methode (marche pas)
+  # user_data = <<EOT
+#!/bin/bash
+#
+#touch /home/ubuntu/user_data_was_here
+#date "+INSTANCE SETUP DATE: %Y-%m-%d TIME: %H:%M:%S.%3N"
+#sudo apt-get update && sudo apt-get full-upgrade -y
+#
+#EOT
 }
 resource "aws_eip" "landip" {
-  # TODO: count 0 si var.associate_public_ip_address false
+  # NB: on doit aligner associate_public_ip_address sur l'instance et map_public_ip_on_launch sur la vpc
   count    = var.associate_public_ip_address ? 1 : 0
   vpc      = true
   instance = aws_instance.wopr4.id
