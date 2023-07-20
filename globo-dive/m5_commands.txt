@@ -49,3 +49,13 @@ terraform state list
 terraform plan -out config.tfplan
 
 terraform apply config.tfplan
+
+
+---------------------
+
+TF_IN_AUTOMATION = TRUE
+TF_LOG = "INFO"
+TF_LOG_PATH = "tf_log_MMDDYY_hhmmss"
+TF_INPUT = FALSE
+TF_VAR_[name] = "[value]"
+TF_CLI_ARGS = "[-xxxx=yyy]"
