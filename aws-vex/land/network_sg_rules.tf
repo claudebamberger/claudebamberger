@@ -2,10 +2,10 @@
 ### Network security
 ##########
 locals {
-   allIPv4 = "0.0.0.0/0"
-   allIPv6 = "::/0"
-   localhostv4 = "127.0.0.1/8"
-   localhostv6 = "::1/128"
+  allIPv4     = "0.0.0.0/0"
+  allIPv6     = "::/0"
+  localhostv4 = "127.0.0.1/8"
+  localhostv6 = "::1/128"
 }
 resource "aws_security_group" "landline_ssh" {
   # access from outside (only ssh)

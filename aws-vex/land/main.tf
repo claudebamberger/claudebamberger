@@ -55,7 +55,7 @@ module "woprPriv" {
   landline_sg_ids             = [aws_security_group.landfill_ssh.id]
   key_pair_id                 = aws_key_pair.wopr4-vex-key-pair.id
 
-  depends_on = [ module.woprPub ]
+  depends_on = [module.woprPub]
 }
 ##########
 ### DNS
