@@ -6,7 +6,6 @@ terraform {
     }
   }
 }
-
 provider "aws" {
   region = var.region
   default_tags {
@@ -17,8 +16,6 @@ provider "aws" {
     }
   }
 }
-
-
 resource "aws_vpc" "diamond_dogs" {
   cidr_block           = var.address_space
   enable_dns_hostnames = true
@@ -28,7 +25,6 @@ resource "aws_vpc" "diamond_dogs" {
     environment = var.environment
   }
 }
-
 resource "aws_subnet" "diamond_dogs" {
   vpc_id     = aws_vpc.diamond_dogs.id
   cidr_block = var.subnet_prefix
@@ -46,7 +42,6 @@ resource "aws_security_group" "diamond_dogs_admin" {
     protocol    = "tcp"
     cidr_blocks = ["92.0.0.0/8"]
   }
-
   egress {
     from_port   = 0
     to_port     = 0
@@ -58,38 +53,31 @@ resource "aws_security_group" "diamond_dogs_admin" {
     Name = "${var.prefix}-ssh-security-group"
   }
 }
-
 resource "aws_security_group" "diamond_dogs" {
-  name = "${var.prefix}-security-group"
-
+  name   = "${var.prefix}-security-group"
   vpc_id = aws_vpc.diamond_dogs.id
-
   ingress {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
   ingress {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
   tags = {
     Name = "${var.prefix}-security-group"
   }
 }
-
 resource "aws_internet_gateway" "diamond_dogs" {
   vpc_id = aws_vpc.diamond_dogs.id
 
@@ -97,53 +85,42 @@ resource "aws_internet_gateway" "diamond_dogs" {
     Name = "${var.prefix}-internet-gateway"
   }
 }
-
 resource "aws_route_table" "diamond_dogs" {
   vpc_id = aws_vpc.diamond_dogs.id
-
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.diamond_dogs.id
   }
 }
-
 resource "aws_route_table_association" "diamond_dogs" {
   subnet_id      = aws_subnet.diamond_dogs.id
   route_table_id = aws_route_table.diamond_dogs.id
 }
-
 data "aws_ami" "ubuntu" {
   most_recent = true
-
   filter {
     name   = "name"
     values = ["ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"]
   }
-
   filter {
     name   = "virtualization-type"
     values = ["hvm"]
   }
-
   owners = ["099720109477"] # Canonical
 }
-
 resource "aws_eip" "diamond_dogs" {
   instance = aws_instance.diamond_dogs.id
   vpc      = true
 }
-
 resource "aws_eip_association" "diamond_dogs" {
   instance_id   = aws_instance.diamond_dogs.id
   allocation_id = aws_eip.diamond_dogs.id
 }
-
 resource "aws_key_pair" "vex_public_key" {
   key_name   = "vex_public_key"
   public_key = var.public_rsa
   # pas besoin de donner la cle privee a ce niveau
 }
-
 resource "aws_instance" "diamond_dogs" {
   ami                         = data.aws_ami.ubuntu.id
   instance_type               = var.instance_type
@@ -157,7 +134,6 @@ resource "aws_instance" "diamond_dogs" {
     height      = var.height
     project     = var.project
   })
-
   tags = {
     Name = "${var.prefix}-diamond_dogs-instance"
   }
