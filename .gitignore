@@ -4,8 +4,10 @@
 *.tfstate
 *.tfstate.*
 *~
-Deep-Dive-Terraform-docs/
-Deep-Dive-Terraform/
+.TODO*
+terraform-labs-udemy/
 Getting-Started-Terraform-pluralsignt/
 getting-started-terraform-pluralsight-docs/
-terraform-labs-udemy/
+Deep-Dive-Terraform-docs/
+Deep-Dive-Terraform/
+Getting-Started-with-Terraform-Cloud/
