@@ -41,7 +41,18 @@ module "woprPub" {
   associate_public_ip_address = true
   name                        = "pub"
   landline_sg_ids             = [aws_security_group.landline_ssh.id, aws_security_group.landfill_proxy.id]
-  key_pair_id                 = aws_key_pair.wopr4-vex-key-pair.id
+  public_key                  = file(var.AWS_PUBLIC_KEY_PATH)
+  ansible_public_key          = var.AWS_ANSIBLE_KEY
+  cloud_init_addon            = <<EOT
+hostname wopr4
+sudo apt-get install -y tinyproxy
+sudo sh -c 'cat /etc/tinyproxy/tinyproxy.conf | sed "s/\#Allow 192\.168\.0\.0\/16/Allow 192.168.0.0\/16/g" > /etc/tinyproxy/tinyproxy.conf2'
+sudo sh -c 'cat /etc/tinyproxy/tinyproxy.conf2 | sed "s/\#Allow 172\.16\.0\.0\/12/Allow 172.16.0.0\/12/g" > /etc/tinyproxy/tinyproxy.conf3'
+sudo sh -c 'cat /etc/tinyproxy/tinyproxy.conf3 | sed "s/\#Allow 10\.0\.0\.0\/8/Allow 10.0.0.0\/8/g" > /etc/tinyproxy/tinyproxy.conf'
+sudo rm /etc/tinyproxy/tinyproxy.conf2 /etc/tinyproxy/tinyproxy.conf3
+sudo chown tinyproxy:tinyproxy /var/log/tinyproxy
+sudo systemctl restart tinyproxy
+EOT
 }
 module "woprPriv" {
   # TODO: https://doc.ubuntu-fr.org/tinyproxy
@@ -53,9 +64,25 @@ module "woprPriv" {
   associate_public_ip_address = false
   name                        = "priv"
   landline_sg_ids             = [aws_security_group.landfill_ssh.id]
-  key_pair_id                 = aws_key_pair.wopr4-vex-key-pair.id
-
-  depends_on = [module.woprPub]
+  public_key                  = file(var.AWS_PUBLIC_KEY_PATH)
+  ansible_public_key          = var.AWS_ANSIBLE_KEY
+  depends_on                  = [module.woprPub]
+  cloud_init_addon            = <<EOT
+sudo sh -c 'echo "Acquire::http::proxy \"http://${module.woprPub.wopr4_internal_ip}:8888/\";" > /etc/apt/apt.conf.d/60.tinyproxy.conf'
+timeout 300 sh -c 'export http_proxy=http://${module.woprPub.wopr4_internal_ip}:8888; curl aws.com; while [ $? != 0 ]; do sleep 30; curl aws.com; done '
+sudo apt-get update && sudo apt-get full-upgrade -y
+sudo apt-get install -y git cowsay zip unzip net-tools ufw ansible ansible-lint neofetch
+sudo sh -c 'echo "export http_proxy=http://${module.woprPub.wopr4_internal_ip}:8888" >> /etc/profile'
+sudo mount /dev/xvdm /wopr4
+grep "\/wopr4" /etc/fstab 
+if [ $? != 0 ]; then
+  sudo sh -c 'echo "UUID="$(blkid /dev/xvdm|sed "s/^.* UUID=\"\([^\"]*\)\".*$/\1/g")"\t/wopr4\tbtrfs\tdefaults,nofail\t0 1" >> /etc/fstab'
+fi
+sudo mount -a
+sudo ln -s /wopr4/ubuntu /home/ubuntu/data
+sudo ln -s /wopr4/root /root/data
+sudo ln -s /wopr4/ansible /home/ansible/data
+EOT
 }
 ##########
 ### DNS
@@ -88,14 +115,8 @@ resource "aws_volume_attachment" "ebs_att" {
 ##########
 ### Outputs (readable)
 ##########
-output "wopr4_public_ip" {
-  value = module.woprPub.wopr4_manage_ip
-}
 output "wopr4priv_internal_ip" {
   value = module.woprPriv.wopr4_internal_ip
-}
-output "wopr4_manage_pubkey" {
-  value = aws_key_pair.wopr4-vex-key-pair.public_key
 }
 output "domain_name_servers" {
   description = "NameServers vs ns-640.awsdns-16.net & ns-1077.awsdns-06.org"

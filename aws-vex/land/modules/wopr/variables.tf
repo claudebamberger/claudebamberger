@@ -18,19 +18,17 @@ variable "landline_sg_ids" {
   description = "les security groupes from outside"
   type        = set(string)
 }
-variable "key_pair_id" {
-  description = "l'ID de la paire de clé ssh pour entrer (et sortir en fait)"
-  type        = string
-}
-variable "public_key_path" {
+variable "public_key" {
   description = "chemin de la clé publique (pour la région), exported shell (optional future use)"
   type        = string
-  default     = "future use"
 }
-variable "private_key_path" {
-  description = "chemin de la clé privée (pour la région), exported shell (optional future use)"
+variable "ansible_public_key" {
+  description = "clé publique ansible"
   type        = string
-  default     = "future use"
+}
+variable "cloud_init_addon" {
+  description = "script spécifique à ajouter en fin d'init"
+  type        = string
 }
 variable "AMI_Ubuntu_LTS22_x86" {
   type        = map(string)

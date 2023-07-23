@@ -20,6 +20,10 @@ variable "AWS_PRIVATE_KEY_PATH" {
   description = "chemin de la clé privée (pour la région), exported shell"
   type        = string
 }
+variable "AWS_ANSIBLE_KEY" {
+  description = "clé publique ansible"
+  type        = string
+}
 variable "AWS_LANDFILL_CIDR_BLOCK" {
   description = "CIDR correspondant au réseau"
   type        = string
