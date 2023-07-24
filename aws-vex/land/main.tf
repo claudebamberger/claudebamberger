@@ -39,6 +39,7 @@ module "woprPub" {
   region                      = var.AWS_REGION
   landline_subnet_id          = module.vpc.public_subnets[0]
   associate_public_ip_address = true
+  private_ip_address          = var.AWS_WOPRPUB_PRIVATE_IP
   name                        = "pub"
   landline_sg_ids             = [aws_security_group.landline_ssh.id, aws_security_group.landfill_proxy.id]
   public_key                  = file(var.AWS_PUBLIC_KEY_PATH)
@@ -62,6 +63,7 @@ module "woprPriv" {
   landline_subnet_id = module.vpc.private_subnets[0]
   # TODO: probleme si false, associe quand meme
   associate_public_ip_address = false
+  private_ip_address          = var.AWS_WOPRPRIV_PRIVATE_IP
   name                        = "priv"
   landline_sg_ids             = [aws_security_group.landfill_ssh.id]
   public_key                  = file(var.AWS_PUBLIC_KEY_PATH)
@@ -79,9 +81,11 @@ if [ $? != 0 ]; then
   sudo sh -c 'echo "UUID="$(blkid /dev/xvdm|sed "s/^.* UUID=\"\([^\"]*\)\".*$/\1/g")"\t/wopr4\tbtrfs\tdefaults,nofail\t0 1" >> /etc/fstab'
 fi
 sudo mount -a
-sudo ln -s /wopr4/ubuntu /home/ubuntu/data
-sudo ln -s /wopr4/root /root/data
-sudo ln -s /wopr4/ansible /home/ansible/data
+sudo sh -c 'if [ ! -L /root/data ]; then ln -s /wopr4/root /root/data; fi'
+sudo sh -c 'if [ ! -L /home/ubuntu/data ]; then ln -s /wopr4/ubuntu /home/ubuntu/data; fi'
+sudo sh -c 'if [ ! -L /home/ansible/data ]; then ln -s /wopr4/ansible /home/ansible/data; fi'
+sudo chown -R ansible:operator /wopr4/ansible
+sudo sh -c 'echo "ansible ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/90-ansible'
 EOT
 }
 ##########
@@ -115,10 +119,6 @@ resource "aws_volume_attachment" "ebs_att" {
 ##########
 ### Outputs (readable)
 ##########
-output "wopr4priv_internal_ip" {
-  value = module.woprPriv.wopr4_internal_ip
-}
 output "domain_name_servers" {
-  description = "NameServers vs ns-640.awsdns-16.net & ns-1077.awsdns-06.org"
-  value       = aws_route53_zone.primary.name_servers
+  value       = "${join("& ", aws_route53_zone.primary.name_servers)} \nvs ns-640.awsdns-16.net & ns-1077.awsdns-06.org set on domain"
 }

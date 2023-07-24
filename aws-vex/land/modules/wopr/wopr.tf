@@ -6,6 +6,7 @@ resource "aws_instance" "wopr4" {
   subnet_id = var.landline_subnet_id
   # NB: on doit aligner associate_public_ip_address sur l'instance et map_public_ip_on_launch sur la vpc
   associate_public_ip_address = var.associate_public_ip_address
+  private_ip = var.private_ip_address
   # Security Group
   vpc_security_group_ids = var.landline_sg_ids
   # TODO: private_dns_name_options et private_dns

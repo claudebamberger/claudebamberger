@@ -14,6 +14,10 @@ variable "associate_public_ip_address" {
   description = "lui faut-il une IP publique"
   type        = bool
 }
+variable "private_ip_address" {
+  description = "IP privée"
+  type        = string
+}
 variable "landline_sg_ids" {
   description = "les security groupes from outside"
   type        = set(string)
