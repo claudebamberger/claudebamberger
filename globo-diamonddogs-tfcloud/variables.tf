@@ -7,6 +7,10 @@ variable "project" {
   type        = string
   description = "(Required) Application project name."
 }
+variable "billable" {
+  type        = string
+  description = "(Required) Application project billable account."
+}
 variable "public_rsa" {
   type        = string
   description = "public key to login as ubuntu"
