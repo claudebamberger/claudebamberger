@@ -1,7 +1,12 @@
+##########
+### AMI
+##########
 resource "aws_instance" "wopr4" {
-  # TODO AMI lookup :
-  # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance
-  ami           = lookup(var.AMI_Ubuntu_LTS22_x86, var.region)
+  lifecycle {
+    ignore_changes = [ami]
+  }
+  // alternative : ami = lookup(var.AMI_Ubuntu_LTS22_x86, var.region)
+  ami = data.aws_ami.ubuntu.image_id
   instance_type = "t2.micro"
   subnet_id = var.landline_subnet_id
   # NB: on doit aligner associate_public_ip_address sur l'instance et map_public_ip_on_launch sur la vpc
@@ -9,7 +14,6 @@ resource "aws_instance" "wopr4" {
   private_ip = var.private_ip_address
   # Security Group
   vpc_security_group_ids = var.landline_sg_ids
-  # TODO: private_dns_name_options et private_dns
   # the Public SSH key
   key_name = aws_key_pair.wopr4-key-pair.id
   tags = {
@@ -23,7 +27,7 @@ sudo mkdir /home/ansible/.ssh
 sudo sh -c 'echo "${var.ansible_public_key}" > /home/ansible/.ssh/authorized_keys'
 sudo mkdir /wopr4
 sudo apt-get update && sudo apt-get full-upgrade -y
-sudo apt-get install -y git cowsay zip unzip net-tools ufw ansible ansible-lint neofetch
+sudo apt-get install -y cowsay zip unzip net-tools inetutils-ping dnsutils vim ufw cron ansible neofetch
 ${var.cloud_init_addon}
 EOT
 }

@@ -34,18 +34,8 @@ variable "AWS_LANDFILL_SUBNET_PRIVE" {
   type        = string
   default     = "192.168.88.0/28"
 }
-variable "AWS_WOPRPRIV_PRIVATE_IP" {
-  description = "IP privée de woprPriv"
-  type        = string
-  default     = "192.168.88.8"
-}
 variable "AWS_LANDFILL_SUBNET_PUBLIC" {
   description = "CIDR correspondant au sous-réseau public"
   type        = string
   default     = "192.168.88.16/28"
-}
-variable "AWS_WOPRPUB_PRIVATE_IP" {
-  description = "IP privée de woprPub"
-  type        = string
-  default     = "192.168.88.20"
 }
