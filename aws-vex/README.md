@@ -149,11 +149,13 @@ par exemple
 
       azs = ["${data.aws_availability_zones.available.names[0]}"]
 
-      enable_nat_gateway     = true
+      enable_nat_gateway     = false // Inutile dans notre cas et coûteux
       single_nat_gateway     = true
       one_nat_gateway_per_az = true
-      enable_vpn_gateway     = false
+      enable_vpn_gateway     = false // Inutile dans notre cas
+      enable_dns_hostnames   = true
 
+      map_public_ip_on_launch       = false
       manage_default_vpc            = false
       manage_default_network_acl    = false
       manage_default_security_group = false
