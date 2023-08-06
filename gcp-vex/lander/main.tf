@@ -1,18 +1,10 @@
-terraform {
-  required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = "~> 4.0"
-    }
-  }
-}
-provider "google" {
-  project = var.GCP_PROJECT_ID
-  region  = var.GCP_REGION
-  //zone    = ""
-}
-
+### penser à se connecter à gcloud (il donne l'url)
+### penser à avoir créé un projet avec le bon id (cf. variable env)
+### penser à avoir activé les APIs ComputeEngine et les APIs DNS
+### penser à avoir créé un disque appelé wopr-data dans la première zone disponible de la région
+##########
 ### DATAs
+##########
 data "google_compute_disk" "wopr_data" {
   name    = "wopr-data"
   project = var.GCP_PROJECT_ID
@@ -22,78 +14,80 @@ data "google_compute_zones" "available" {
   #https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_zones
 }
 data "google_dns_managed_zone" "env_dns_zone" {
-  name = "gcp-claudebbg-zone"
+  name = var.GCP_ZONE_DNS
 }
+##########
 ### network
-# TODO: module https://registry.terraform.io/modules/terraform-google-modules/network/google/latest
-resource "google_compute_network" "lander" {
-  name                    = "lander"
-  auto_create_subnetworks = false
-}
-resource "google_compute_subnetwork" "lander-subnet-public" {
-  name          = "lander-subnetwork-public"
-  ip_cidr_range = var.GCP_LANDER_SUBNET_PUBLIC
-  region        = var.GCP_REGION
-  network       = google_compute_network.lander.id
-  secondary_ip_range {
-    range_name    = "lander-self-public"
-    ip_cidr_range = "172.16.8.16/28"
-  }
-}
-resource "google_compute_subnetwork" "lander-subnet-private" {
-  name          = "lander-subnetwork-private"
-  ip_cidr_range = var.GCP_LANDER_SUBNET_PRIVATE
-  region        = var.GCP_REGION
-  network       = google_compute_network.lander.id
-  secondary_ip_range {
-    range_name    = "lander-self-private"
-    ip_cidr_range = "172.16.8.0/28"
-  }
+##########
+# DONE: module https://registry.terraform.io/modules/terraform-google-modules/network/google/latest
+module "vpc" {
+  source  = "terraform-google-modules/network/google"
+  version = "~> 7.2"
+
+  project_id   = var.GCP_PROJECT_ID
+  network_name = "wopr-vpc"
+  routing_mode = "GLOBAL"
+  subnets = [
+    {
+      subnet_name   = "lander"
+      subnet_ip     = "${var.GCP_LANDER_SUBNET_PUBLIC}"
+      subnet_region = "${var.GCP_REGION}"
+    },
+    {
+      subnet_name   = "lander-private"
+      subnet_ip     = "${var.GCP_LANDER_SUBNET_PRIVATE}"
+      subnet_region = "${var.GCP_REGION}"
+    }
+  ]
+  routes = [
+    {
+      name              = "egress-internet"
+      description       = "route through IGW to access internet"
+      destination_range = "0.0.0.0/0"
+      tags              = "egress-inet"
+      next_hop_internet = "true"
+    }
+  ]
+  firewall_rules = [
+    {
+      name        = "landline"
+      description = "firewall for ssh access"
+      # https://www.middlewareinventory.com/blog/create-linux-vm-in-gcp-with-terraform-remote-exec/#compute_firewall_block_-_Allow_SSH_and_HTTPS_connections
+        allow = [{
+        ports    = ["22"]
+        protocol = "tcp"
+      }]
+      destination_ranges = ["${var.GCP_LANDER_SUBNET_PUBLIC}"]
+      direction          = "INGRESS"
+      source_ranges      = ["${var.GCP_SECURE_CIDR}"]
+      target_tags        = ["ssh-admin"]
+    },
+    {
+      name        = "landline-internal"
+      description = "firewall for ssh access"
+      allow = [{
+        ports    = ["22"]
+        protocol = "tcp"
+      }]
+      direction = "INGRESS"
+      source_ranges = [
+        "${var.GCP_LANDER_SUBNET_PUBLIC}",
+        "${var.GCP_LANDER_SUBNET_PRIVATE}"
+      ]
+      target_tags = ["ssh-internal"]
+    }
+  ]
 }
 resource "google_compute_address" "admin-public-ip" {
   name       = "admin-public-ip"
   project    = var.GCP_PROJECT_ID
   region     = var.GCP_REGION
-  depends_on = [google_compute_firewall.landline]
+  depends_on = [module.vpc]
 }
-resource "google_compute_firewall" "landline" {
-  # https://www.middlewareinventory.com/blog/create-linux-vm-in-gcp-with-terraform-remote-exec/#compute_firewall_block_-_Allow_SSH_and_HTTPS_connections
-  name        = "landline"
-  description = "firewall for ssh access"
-  network     = google_compute_network.lander.name
-  allow {
-    ports    = ["22"]
-    protocol = "tcp"
-  }
-  destination_ranges = ["${var.GCP_LANDER_SUBNET_PUBLIC}"]
 
-  direction = "INGRESS"
-  log_config {
-    metadata = "INCLUDE_ALL_METADATA"
-  }
-  source_ranges = ["${var.GCP_SECURE_CIDR}"]
-  target_tags   = ["ssh-admin"]
-}
-resource "google_compute_firewall" "landlineInternal" {
-  name        = "landline-internal"
-  description = "firewall for ssh access"
-  network     = google_compute_network.lander.name
-  allow {
-    ports    = ["22"]
-    protocol = "tcp"
-  }
-  direction = "INGRESS"
-  source_ranges = [
-    "${var.GCP_LANDER_SUBNET_PUBLIC}",
-    "${var.GCP_LANDER_SUBNET_PRIVATE}"
-  ]
-  log_config {
-    metadata = "INCLUDE_ALL_METADATA"
-
-  }
-  target_tags = ["ssh-internal"]
-}
+##########
 ### instances
+##########
 resource "google_compute_instance" "woprPub" {
   description  = "wopr-pub"
   name         = "wopr-pub"
@@ -107,7 +101,8 @@ resource "google_compute_instance" "woprPub" {
     }
   }
   network_interface {
-    subnetwork = google_compute_subnetwork.lander-subnet-public.id
+    //subnetwork = google_compute_subnetwork.lander-subnet-public.id
+    subnetwork = module.vpc.subnets_ids[0]
     access_config {
       nat_ip = google_compute_address.admin-public-ip.address
     }
@@ -118,6 +113,7 @@ resource "google_compute_instance" "woprPub" {
     ssh-keys       = "ansible:${file(var.GCP_PUBLIC_KEY_PATH)}\nmex:${file(var.GCP_PUBLIC_KEY_PATH)}"
   }
   provisioner "remote-exec" {
+    # TODO: risque de ne pas marcher
     connection {
       # user is added to sudoers (good)
       host        = google_compute_address.admin-public-ip.address
@@ -131,8 +127,8 @@ resource "google_compute_instance" "woprPub" {
       "sudo echo $(date)> /tmp/provisioner",
     ]
   }
-  tags       = ["ssh-admin", "ssh-internal"]
-  depends_on = [google_compute_firewall.landline, google_compute_firewall.landlineInternal]
+  tags = ["ssh-admin", "ssh-internal"]
+  //depends_on = [google_compute_firewall.landline, google_compute_firewall.landlineInternal]
 }
 resource "google_compute_instance" "woprPriv" {
   description  = "wopr-priv"
@@ -145,7 +141,7 @@ resource "google_compute_instance" "woprPriv" {
     }
   }
   network_interface {
-    subnetwork = google_compute_subnetwork.lander-subnet-private.id
+    subnetwork = module.vpc.subnets_ids[1]
   }
   metadata = {
     enable-oslogin = false
@@ -168,10 +164,9 @@ resource "google_compute_instance" "woprPriv" {
     mode        = "READ_WRITE"
     device_name = "wopr-data-0"
     source      = data.google_compute_disk.wopr_data.id
-
   }
-  tags       = ["ssh-internal"]
-  depends_on = [google_compute_firewall.landlineInternal]
+  tags = ["ssh-internal"]
+  //depends_on = [google_compute_firewall.landlineInternal]
 }
 ### DNS registration
 resource "google_dns_record_set" "dns" {

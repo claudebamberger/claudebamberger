@@ -6,6 +6,10 @@ variable "GCP_REGION" {
   description = "région GCP visée, exported shell"
   type        = string
 }
+variable "GCP_ZONE_DNS" {
+  description = "nom de la zone DNS déclarée, exported shell"
+  type        = string
+}
 variable "GCP_SECURE_CIDR" {
   description = "CIDR sûr en entrée, exported shell"
   type        = string
