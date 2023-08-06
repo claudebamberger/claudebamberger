@@ -29,7 +29,7 @@ module "vpc" {
   routing_mode = "GLOBAL"
   subnets = [
     {
-      subnet_name   = "lander"
+      subnet_name   = "lander-public"
       subnet_ip     = "${var.GCP_LANDER_SUBNET_PUBLIC}"
       subnet_region = "${var.GCP_REGION}"
     },
@@ -50,16 +50,16 @@ module "vpc" {
   ]
   firewall_rules = [
     {
-      name        = "landline"
+      name        = "landline-external"
       description = "firewall for ssh access"
       # https://www.middlewareinventory.com/blog/create-linux-vm-in-gcp-with-terraform-remote-exec/#compute_firewall_block_-_Allow_SSH_and_HTTPS_connections
         allow = [{
         ports    = ["22"]
         protocol = "tcp"
       }]
+      source_ranges      = ["${var.GCP_SECURE_CIDR}"]
       destination_ranges = ["${var.GCP_LANDER_SUBNET_PUBLIC}"]
       direction          = "INGRESS"
-      source_ranges      = ["${var.GCP_SECURE_CIDR}"]
       target_tags        = ["ssh-admin"]
     },
     {
@@ -74,11 +74,15 @@ module "vpc" {
         "${var.GCP_LANDER_SUBNET_PUBLIC}",
         "${var.GCP_LANDER_SUBNET_PRIVATE}"
       ]
+      destination_ranges = [
+        "${var.GCP_LANDER_SUBNET_PUBLIC}",
+        "${var.GCP_LANDER_SUBNET_PRIVATE}"
+      ]
       target_tags = ["ssh-internal"]
     }
   ]
 }
-resource "google_compute_address" "admin-public-ip" {
+resource "google_compute_address" "admin_public_ip" {
   name       = "admin-public-ip"
   project    = var.GCP_PROJECT_ID
   region     = var.GCP_REGION
@@ -101,10 +105,10 @@ resource "google_compute_instance" "woprPub" {
     }
   }
   network_interface {
-    //subnetwork = google_compute_subnetwork.lander-subnet-public.id
+    //subnetwork = google_compute_subnetwork.lander-public.id
     subnetwork = module.vpc.subnets_ids[0]
     access_config {
-      nat_ip = google_compute_address.admin-public-ip.address
+      nat_ip = google_compute_address.admin_public_ip.address
     }
   }
   metadata = {
@@ -116,7 +120,7 @@ resource "google_compute_instance" "woprPub" {
     # TODO: risque de ne pas marcher
     connection {
       # user is added to sudoers (good)
-      host        = google_compute_address.admin-public-ip.address
+      host        = google_compute_address.admin_public_ip.address
       user        = "ansible"
       private_key = file(var.GCP_PRIVATE_KEY_PATH)
       timeout     = "30s"
@@ -128,7 +132,6 @@ resource "google_compute_instance" "woprPub" {
     ]
   }
   tags = ["ssh-admin", "ssh-internal"]
-  //depends_on = [google_compute_firewall.landline, google_compute_firewall.landlineInternal]
 }
 resource "google_compute_instance" "woprPriv" {
   description  = "wopr-priv"
@@ -141,6 +144,7 @@ resource "google_compute_instance" "woprPriv" {
     }
   }
   network_interface {
+    //subnetwork = google_compute_subnetwork.lander-private.id
     subnetwork = module.vpc.subnets_ids[1]
   }
   metadata = {
@@ -150,7 +154,7 @@ resource "google_compute_instance" "woprPriv" {
   provisioner "remote-exec" {
     connection {
       # user is added to sudoers (good)
-      host        = google_compute_address.admin-public-ip.address
+      host        = google_compute_address.admin_public_ip.address
       user        = "ansible"
       private_key = file(var.GCP_PRIVATE_KEY_PATH)
       timeout     = "30s"
@@ -166,15 +170,14 @@ resource "google_compute_instance" "woprPriv" {
     source      = data.google_compute_disk.wopr_data.id
   }
   tags = ["ssh-internal"]
-  //depends_on = [google_compute_firewall.landlineInternal]
 }
 ### DNS registration
-resource "google_dns_record_set" "dns" {
+resource "google_dns_record_set" "WoprPubDNS" {
   name         = "wopr.${data.google_dns_managed_zone.env_dns_zone.dns_name}"
   type         = "A"
   ttl          = 300
   managed_zone = data.google_dns_managed_zone.env_dns_zone.name
-  rrdatas      = ["${google_compute_address.admin-public-ip.address}"]
+  rrdatas      = ["${google_compute_address.admin_public_ip.address}"]
 }
 ### Output
 output "publicAdminIp" {
