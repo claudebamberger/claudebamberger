@@ -52,33 +52,38 @@ module "vpc" {
     {
       name        = "landline-external"
       description = "firewall for ssh access"
+      direction   = "INGRESS"
       # https://www.middlewareinventory.com/blog/create-linux-vm-in-gcp-with-terraform-remote-exec/#compute_firewall_block_-_Allow_SSH_and_HTTPS_connections
       allow = [{
         ports    = ["22"]
         protocol = "tcp"
       }]
-      source_ranges      = ["${var.GCP_SECURE_CIDR}"]
-      destination_ranges = ["${var.GCP_LANDER_SUBNET_PUBLIC}"]
-      direction          = "INGRESS"
-      target_tags        = ["ssh-admin"]
+      target_tags   = ["ssh-admin"]
+      source_ranges = ["${var.GCP_SECURE_CIDR}"]
     },
     {
       name        = "landline-internal"
       description = "firewall for ssh access"
+      direction   = "INGRESS"
       allow = [{
         ports    = ["22"]
         protocol = "tcp"
       }]
-      direction = "INGRESS"
-      source_ranges = [
-        "${var.GCP_LANDER_SUBNET_PUBLIC}",
-        "${var.GCP_LANDER_SUBNET_PRIVATE}"
-      ]
-      destination_ranges = [
-        "${var.GCP_LANDER_SUBNET_PUBLIC}",
-        "${var.GCP_LANDER_SUBNET_PRIVATE}"
-      ]
-      target_tags = ["ssh-internal"]
+      target_tags   = ["ssh-internal"]
+      source_tags   = ["ssh-internal"]
+      source_ranges = ["${var.GCP_LANDER_SUBNET_PRIVATE}", "${var.GCP_LANDER_SUBNET_PUBLIC}"]
+    },
+    {
+      name        = "proxyland-internal"
+      description = "firewall for proxy access"
+      direction   = "INGRESS"
+      allow = [{
+        ports    = ["8888"]
+        protocol = "tcp"
+      }]
+      target_tags   = ["wopr-pub"]
+      source_tags   = ["wopr-priv"]
+      source_ranges = ["${var.GCP_LANDER_SUBNET_PRIVATE}"]
     }
   ]
 }
@@ -96,6 +101,7 @@ resource "google_compute_address" "admin_public_ip" {
 resource "google_compute_instance" "woprPub" {
   description  = "wopr-pub"
   name         = "wopr-pub"
+  tags         = ["ssh-admin", "ssh-internal", "wopr-pub"] # utilisé par le firewall
   zone         = data.google_compute_zones.available.names[0]
   machine_type = "e2-micro"
   boot_disk {
@@ -123,15 +129,16 @@ resource "google_compute_instance" "woprPub" {
       # user is added to sudoers (good)
       host        = google_compute_address.admin_public_ip.address
       user        = "ansible"
+      agent       = true
       private_key = file(var.GCP_PRIVATE_KEY_PATH)
-      timeout     = "30s"
+      timeout     = "60s" # semble nécessaire >30s
     }
     inline = [
-      "ssh-agent ; ssh-add -L",
+      "ssh-agent && ssh-add -L",
       "sudo bash -c 'export DEBIAN_FRONTEND=noninteractive && apt -yq update && apt -yq upgrade'",
-      "sudo bash -c 'export DEBIAN_FRONTEND=noninteractive && apt -yq install neofetch  tinyproxy'",
+      "sudo bash -c 'export DEBIAN_FRONTEND=noninteractive && apt -yq install cowsay zip unzip net-tools inetutils-ping dnsutils vim ufw cron ansible neofetch'",
       "sudo apt -yq install tinyproxy",
-      "sudo sh -c 'cat /etc/tinyproxy/tinyproxy.conf | sed \"s/\\#Allow 192\\.168\\.0\\.0\\/16/Allow wopr-priv/g\" > /etc/tinyproxy/tinyproxy.conf.tmp'",
+      "sudo sh -c 'cat /etc/tinyproxy/tinyproxy.conf | sed \"s/\\#Allow 192\\.168\\.0\\.0\\/16/Allow ${google_compute_instance.woprPriv.network_interface[0].network_ip}/g\" > /etc/tinyproxy/tinyproxy.conf.tmp'",
       "sudo sh -c 'cat /etc/tinyproxy/tinyproxy.conf.tmp | sed \"s/\\#Allow 10\\.0\\.0\\.0\\/8/#Allow 10.0.0.0\\/8/g\" > /etc/tinyproxy/tinyproxy.conf'",
       "sudo rm /etc/tinyproxy/tinyproxy.conf.tmp",
       "sudo chown tinyproxy:tinyproxy /var/log/tinyproxy",
@@ -139,7 +146,6 @@ resource "google_compute_instance" "woprPub" {
       "sudo echo $(date) > /tmp/provisioner",
     ]
   }
-  tags = ["ssh-admin", "ssh-internal"]
 }
 
 ### WoprPriv
@@ -147,6 +153,7 @@ resource "google_compute_instance" "woprPub" {
 resource "google_compute_instance" "woprPriv" {
   description  = "wopr-priv"
   name         = "wopr-priv"
+  tags         = ["ssh-internal", "wopr-priv"] # utilisé par le firewall
   zone         = data.google_compute_zones.available.names[0]
   machine_type = "e2-micro"
   boot_disk {
@@ -162,7 +169,7 @@ resource "google_compute_instance" "woprPriv" {
     enable-oslogin = false
     ssh-keys       = "ansible:${file(var.GCP_PUBLIC_KEY_PATH)}\nmex:${file(var.GCP_PUBLIC_KEY_PATH)}"
   }
-  provisioner "remote-exec" {
+  /*provisioner "remote-exec" {
     connection {
       # user is added to sudoers (good)
       bastion_host        = google_compute_address.admin_public_ip.address
@@ -173,20 +180,19 @@ resource "google_compute_instance" "woprPriv" {
       type                = "ssh"
       agent               = true
       private_key         = file(var.GCP_PRIVATE_KEY_PATH)
-      timeout             = "30s"
+      timeout             = "60s"
     }
     inline = [
       # pas possible d'accéder à internet depuis priv
       "sudo echo $(date)> /tmp/provisioner",
     ]
-  }
+  }*/
   attached_disk {
     # est monté en /dev/sdb
     mode        = "READ_WRITE"
     device_name = "wopr-data-0"
     source      = data.google_compute_disk.wopr_data.id
   }
-  tags = ["ssh-internal"]
 }
 ##########
 ### DNS registration
