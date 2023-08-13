@@ -53,7 +53,7 @@ module "vpc" {
       name        = "landline-external"
       description = "firewall for ssh access"
       # https://www.middlewareinventory.com/blog/create-linux-vm-in-gcp-with-terraform-remote-exec/#compute_firewall_block_-_Allow_SSH_and_HTTPS_connections
-        allow = [{
+      allow = [{
         ports    = ["22"]
         protocol = "tcp"
       }]
@@ -92,6 +92,7 @@ resource "google_compute_address" "admin_public_ip" {
 ##########
 ### instances
 ##########
+### WoprPub
 resource "google_compute_instance" "woprPub" {
   description  = "wopr-pub"
   name         = "wopr-pub"
@@ -126,13 +127,23 @@ resource "google_compute_instance" "woprPub" {
       timeout     = "30s"
     }
     inline = [
-      "sudo bash -c 'export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get -yq upgrade'",
-      "sudo bash -c 'export DEBIAN_FRONTEND=noninteractive && apt-get -yq install neofetch'",
-      "sudo echo $(date)> /tmp/provisioner",
+      "ssh-agent ; ssh-add -L",
+      "sudo bash -c 'export DEBIAN_FRONTEND=noninteractive && apt -yq update && apt -yq upgrade'",
+      "sudo bash -c 'export DEBIAN_FRONTEND=noninteractive && apt -yq install neofetch  tinyproxy'",
+      "sudo apt -yq install tinyproxy",
+      "sudo sh -c 'cat /etc/tinyproxy/tinyproxy.conf | sed \"s/\\#Allow 192\\.168\\.0\\.0\\/16/Allow wopr-priv/g\" > /etc/tinyproxy/tinyproxy.conf.tmp'",
+      "sudo sh -c 'cat /etc/tinyproxy/tinyproxy.conf.tmp | sed \"s/\\#Allow 10\\.0\\.0\\.0\\/8/#Allow 10.0.0.0\\/8/g\" > /etc/tinyproxy/tinyproxy.conf'",
+      "sudo rm /etc/tinyproxy/tinyproxy.conf.tmp",
+      "sudo chown tinyproxy:tinyproxy /var/log/tinyproxy",
+      "sudo systemctl restart tinyproxy",
+      "sudo echo $(date) > /tmp/provisioner",
     ]
   }
   tags = ["ssh-admin", "ssh-internal"]
 }
+
+### WoprPriv
+
 resource "google_compute_instance" "woprPriv" {
   description  = "wopr-priv"
   name         = "wopr-priv"
@@ -154,10 +165,15 @@ resource "google_compute_instance" "woprPriv" {
   provisioner "remote-exec" {
     connection {
       # user is added to sudoers (good)
-      host        = google_compute_address.admin_public_ip.address
-      user        = "ansible"
-      private_key = file(var.GCP_PRIVATE_KEY_PATH)
-      timeout     = "30s"
+      bastion_host        = google_compute_address.admin_public_ip.address
+      bastion_user        = "ansible"
+      bastion_private_key = file(var.GCP_PRIVATE_KEY_PATH)
+      host                = google_compute_instance.woprPriv.network_interface[0].network_ip
+      user                = "ansible"
+      type                = "ssh"
+      agent               = true
+      private_key         = file(var.GCP_PRIVATE_KEY_PATH)
+      timeout             = "30s"
     }
     inline = [
       # pas possible d'accéder à internet depuis priv
@@ -165,13 +181,16 @@ resource "google_compute_instance" "woprPriv" {
     ]
   }
   attached_disk {
+    # est monté en /dev/sdb
     mode        = "READ_WRITE"
     device_name = "wopr-data-0"
     source      = data.google_compute_disk.wopr_data.id
   }
   tags = ["ssh-internal"]
 }
+##########
 ### DNS registration
+##########
 resource "google_dns_record_set" "WoprPubDNS" {
   name         = "wopr.${data.google_dns_managed_zone.env_dns_zone.dns_name}"
   type         = "A"
@@ -179,7 +198,9 @@ resource "google_dns_record_set" "WoprPubDNS" {
   managed_zone = data.google_dns_managed_zone.env_dns_zone.name
   rrdatas      = ["${google_compute_address.admin_public_ip.address}"]
 }
+##########
 ### Output
+##########
 output "publicAdminIp" {
   value = "ssh-agent && ssh-add […] ssh -A ansible@wopr.gcp.claudebbg.com"
 }

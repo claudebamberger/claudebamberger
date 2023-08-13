@@ -1,3 +1,5 @@
+#!/bin/sh
+
 aws ec2 describe-instances --output text \
 --query "Reservations[*].Instances[*].{Instance:InstanceId,Name:Tags[?Key=='name']|[0].Value,AZ:Placement.AvailabilityZone,State:State.Name}" \
 --region=eu-central-1;
