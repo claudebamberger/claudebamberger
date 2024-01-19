@@ -36,6 +36,20 @@ resource "aws_security_group" "landfill_ssh" {
   }
   tags = { name = "landfill_ssh" }
 }
+resource "aws_security_group" "landfill_icmp" {
+  # access ONLY from inside (and only icmp)
+  vpc_id = module.vpc.vpc_id
+  name   = "landfill_icmp"
+  ingress {
+    description      = "ICMP from inside ipv4"
+    from_port        = 0
+    to_port          = 14
+    protocol         = "icmp"
+    cidr_blocks      = ["${var.AWS_LANDFILL_SUBNET_PRIVE}", "${var.AWS_LANDFILL_SUBNET_PUBLIC}"]
+    ipv6_cidr_blocks = ["::1/128"]
+  }
+  tags = { name = "landfill_icmp" }
+}
 resource "aws_security_group" "landfill_proxy" {
   # access ONLY from inside (and only proxy)
   vpc_id = module.vpc.vpc_id
