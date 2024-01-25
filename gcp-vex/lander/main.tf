@@ -68,6 +68,9 @@ module "vpc" {
       allow = [{
         ports    = ["22"]
         protocol = "tcp"
+      },
+      {
+        protocol = "icmp"
       }]
       target_tags   = ["ssh-internal"]
       source_tags   = ["ssh-internal"]
@@ -169,7 +172,11 @@ resource "google_compute_instance" "woprPriv" {
     enable-oslogin = false
     ssh-keys       = "ansible:${file(var.GCP_PUBLIC_KEY_PATH)}\nmex:${file(var.GCP_PUBLIC_KEY_PATH)}"
   }
-  /*provisioner "remote-exec" {
+  # TODO: risque de ne pas marcher
+  # TODO: verifier le bon acces via proxy
+  # "sudo echo 'ansible ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/90-ansible",
+  # "sudo chown -R ansible:operator /wopr4/ansible",
+  provisioner "remote-exec" {
     connection {
       # user is added to sudoers (good)
       bastion_host        = google_compute_address.admin_public_ip.address
@@ -183,10 +190,20 @@ resource "google_compute_instance" "woprPriv" {
       timeout             = "60s"
     }
     inline = [
-      # pas possible d'accéder à internet depuis priv
       "sudo echo $(date)> /tmp/provisioner",
+      "sudo sh -c 'echo Acquire::http::proxy http://wopr-pub/:8888/; > /etc/apt/apt.conf.d/60tinyproxy.conf'",
+      "timeout 300 sh -c 'export http_proxy=http://wopr-pub:8888; curl aws.com; while [ $? != 0 ]; do sleep 30; curl aws.com; done '", 
+      "sudo apt-get update && sudo apt-get full-upgrade -y", 
+      "sudo apt-get install -y git cowsay zip unzip net-tools inetutils-ping dnsutils vim ufw cron ansible ansible-lint neofetch ",
+      "sudo sh -c 'echo export http_proxy=http://wopr-pub:8888 >> /etc/profile'",
+      "sudo mount /dev/sdb /wopr4",
+      "sudo grep 'wopr4' /etc/fstab; if [ $? != 0 ]; then sudo echo $(blkid /dev/sdb|grep 'LABEL=.wopr-data'|col3) /wopr4 ext4 defaults,nofail 0 1 > /tmp/prepfstab; sudo sh -c 'cat /tmp/prepfstab >> /etc/fstab' ; fi",
+      "sudo mount -a",
+      "sudo sh -c 'if [ ! -L /root/data ]; then ln -s /wopr4/root /root/data; fi'",
+      "sudo sh -c 'if [ ! -L /home/ubuntu/data ]; then ln -s /wopr4/ubuntu /home/ubuntu/data; fi'",
+      "sudo sh -c 'if [ ! -L /home/ansible/data ]; then ln -s /wopr4/ansible /home/ansible/data; fi'",
     ]
-  }*/
+  }
   attached_disk {
     # est monté en /dev/sdb
     mode        = "READ_WRITE"
