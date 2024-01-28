@@ -58,7 +58,8 @@ module "vpc" {
         ports    = ["22"]
         protocol = "tcp"
       }]
-      target_tags   = ["ssh-admin"]
+      target_tags = ["ssh-admin"]
+      # source_ranges nécessaire car pas de source_tags (un des 2 obligatoire)
       source_ranges = ["${var.GCP_SECURE_CIDR}"]
     },
     {
@@ -68,13 +69,13 @@ module "vpc" {
       allow = [{
         ports    = ["22"]
         protocol = "tcp"
-      },
-      {
-        protocol = "icmp"
+        },
+        {
+          protocol = "icmp"
       }]
-      target_tags   = ["ssh-internal"]
-      source_tags   = ["ssh-internal"]
-      source_ranges = ["${var.GCP_LANDER_SUBNET_PRIVATE}", "${var.GCP_LANDER_SUBNET_PUBLIC}"]
+      target_tags = ["ssh-internal"]
+      source_tags = ["ssh-internal"]
+      # pas forcément utile avec les tags, instable en plan: source_ranges = ["${var.GCP_LANDER_SUBNET_PRIVATE}", "${var.GCP_LANDER_SUBNET_PUBLIC}"]
     },
     {
       name        = "proxyland-internal"
@@ -84,9 +85,9 @@ module "vpc" {
         ports    = ["8888"]
         protocol = "tcp"
       }]
-      target_tags   = ["wopr-pub"]
-      source_tags   = ["wopr-priv"]
-      source_ranges = ["${var.GCP_LANDER_SUBNET_PRIVATE}"]
+      target_tags = ["wopr-pub"]
+      source_tags = ["wopr-priv"]
+      # pas forcément utile avec les tags, instable en plan: source_ranges = ["${var.GCP_LANDER_SUBNET_PRIVATE}"]
     }
   ]
 }
@@ -192,8 +193,8 @@ resource "google_compute_instance" "woprPriv" {
     inline = [
       "sudo echo $(date)> /tmp/provisioner",
       "sudo sh -c 'echo Acquire::http::proxy http://wopr-pub/:8888/; > /etc/apt/apt.conf.d/60tinyproxy.conf'",
-      "timeout 300 sh -c 'export http_proxy=http://wopr-pub:8888; curl aws.com; while [ $? != 0 ]; do sleep 30; curl aws.com; done '", 
-      "sudo apt-get update && sudo apt-get full-upgrade -y", 
+      "timeout 300 sh -c 'export http_proxy=http://wopr-pub:8888; curl aws.com; while [ $? != 0 ]; do sleep 30; curl aws.com; done '",
+      "sudo apt-get update && sudo apt-get full-upgrade -y",
       "sudo apt-get install -y git cowsay zip unzip net-tools inetutils-ping dnsutils vim ufw cron ansible ansible-lint neofetch ",
       "sudo sh -c 'echo export http_proxy=http://wopr-pub:8888 >> /etc/profile'",
       "sudo mount /dev/sdb /wopr4",

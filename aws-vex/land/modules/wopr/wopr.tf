@@ -39,6 +39,8 @@ resource "aws_key_pair" "wopr4-key-pair" {
 resource "aws_eip" "landip" {
   # NB: on doit aligner associate_public_ip_address sur l'instance et map_public_ip_on_launch sur la vpc
   count    = var.associate_public_ip_address ? 1 : 0
-  vpc      = true
+  # deprecated vpc      = true
+  # replaced by
+  domain   = "vpc"
   instance = aws_instance.wopr4.id
 }

@@ -3,7 +3,7 @@
 ##########
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = ">=4.0.2,<4.1"
+  version = ">=5.0,<6.0"
 
   tags            = { Environment = "test" }
   cidr            = var.AWS_LANDFILL_CIDR_BLOCK
