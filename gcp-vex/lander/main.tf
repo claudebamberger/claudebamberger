@@ -61,7 +61,18 @@ module "vpc" {
       }]
       target_tags = ["ssh-admin"]
       # source_ranges nécessaire car pas de source_tags (un des 2 obligatoire)
-      # ranges = ["${var.GCP_SECURE_CIDR}"]
+      ranges = ["${var.GCP_SECURE_CIDR}"]
+    },
+    {
+      name        = "landline-external-e"
+      description = "firewall for ssh access"
+      direction   = "EGRESS"
+      priority    = 1000
+      allow = [{
+        ports    = ["80", "443"]
+        protocol = "tcp"
+      }]
+      ranges = ["0.0.0.0/0"]
     },
     {
       name        = "landline-internal"
@@ -80,6 +91,21 @@ module "vpc" {
       # pas forcément utile avec les tags, instable en plan: source_ranges = ["${var.GCP_LANDER_SUBNET_PRIVATE}", "${var.GCP_LANDER_SUBNET_PUBLIC}"]
     },
     {
+      name        = "landline-internal-e"
+      description = "firewall for ssh access"
+      direction   = "EGRESS"
+      priority    = 1000
+      allow = [{
+        ports    = ["22"]
+        protocol = "tcp"
+        },
+        {
+          protocol = "icmp"
+      }]
+      target_tags = ["ssh-internal"]
+      ranges = ["0.0.0.0/0"]
+    },
+    {
       name        = "proxyland-internal"
       description = "firewall for proxy access"
       direction   = "INGRESS"
@@ -91,6 +117,17 @@ module "vpc" {
       target_tags = ["wopr-pub"]
       source_tags = ["wopr-priv"]
       # pas forcément utile avec les tags, instable en plan: source_ranges = ["${var.GCP_LANDER_SUBNET_PRIVATE}"]
+    },
+    {
+      name        = "proxyland-internal-e"
+      description = "firewall for proxy access"
+      direction   = "EGRESS"
+      priority    = 1000
+      allow = [{
+        ports    = ["8888"]
+        protocol = "tcp"
+      }]
+      ranges = ["0.0.0.0/0"]
     },
     {
       name        = "no-other-ingress"
@@ -106,6 +143,23 @@ module "vpc" {
         {
           protocol = "icmp"
       }]
+      ranges = ["0.0.0.0/0"]
+    },
+    {
+      name        = "no-other-egress"
+      description = "no other egress"
+      direction   = "EGRESS"
+      priority    = 65000
+      deny = [{
+        protocol = "tcp"
+        },
+        {
+          protocol = "udp"
+        },
+        {
+          protocol = "icmp"
+      }]
+      ranges = ["0.0.0.0/0"]
     }
   ]
 }
