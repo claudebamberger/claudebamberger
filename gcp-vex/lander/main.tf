@@ -54,18 +54,20 @@ module "vpc" {
       description = "firewall for ssh access"
       direction   = "INGRESS"
       # https://www.middlewareinventory.com/blog/create-linux-vm-in-gcp-with-terraform-remote-exec/#compute_firewall_block_-_Allow_SSH_and_HTTPS_connections
+      priority = 1000
       allow = [{
         ports    = ["22"]
         protocol = "tcp"
       }]
       target_tags = ["ssh-admin"]
       # source_ranges nécessaire car pas de source_tags (un des 2 obligatoire)
-      source_ranges = ["${var.GCP_SECURE_CIDR}"]
+      # ranges = ["${var.GCP_SECURE_CIDR}"]
     },
     {
       name        = "landline-internal"
       description = "firewall for ssh access"
       direction   = "INGRESS"
+      priority    = 1000
       allow = [{
         ports    = ["22"]
         protocol = "tcp"
@@ -81,6 +83,7 @@ module "vpc" {
       name        = "proxyland-internal"
       description = "firewall for proxy access"
       direction   = "INGRESS"
+      priority    = 1000
       allow = [{
         ports    = ["8888"]
         protocol = "tcp"
@@ -88,6 +91,21 @@ module "vpc" {
       target_tags = ["wopr-pub"]
       source_tags = ["wopr-priv"]
       # pas forcément utile avec les tags, instable en plan: source_ranges = ["${var.GCP_LANDER_SUBNET_PRIVATE}"]
+    },
+    {
+      name        = "no-other-ingress"
+      description = "no other ingress"
+      direction   = "INGRESS"
+      priority    = 65000
+      deny = [{
+        protocol = "tcp"
+        },
+        {
+          protocol = "udp"
+        },
+        {
+          protocol = "icmp"
+      }]
     }
   ]
 }
