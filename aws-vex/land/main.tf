@@ -58,10 +58,12 @@ module "woprPub" {
   associate_public_ip_address = true
   private_ip_address          = null
   name                        = "pub"
-  landline_sg_ids = [aws_security_group.landline_ssh.id,
+  landline_sg_ids = [
+    aws_security_group.landline_ssh.id,
     aws_security_group.landfill_proxy.id,
     aws_security_group.landfill_ssh.id,
-  aws_security_group.landfill_icmp.id]
+    aws_security_group.landfill_icmp.id
+  ]
   public_key         = file(var.AWS_PUBLIC_KEY_PATH)
   ansible_public_key = var.AWS_ANSIBLE_KEY
   cloud_init_addon   = <<EOT
@@ -107,11 +109,14 @@ module "woprPriv" {
   associate_public_ip_address = false
   private_ip_address          = null
   name                        = "priv"
-  landline_sg_ids             = [aws_security_group.landfill_ssh.id, aws_security_group.landfill_icmp.id]
-  public_key                  = file(var.AWS_PUBLIC_KEY_PATH)
-  ansible_public_key          = var.AWS_ANSIBLE_KEY
-  depends_on                  = [module.woprPub, aws_route53_record.woprPubNSPriv]
-  cloud_init_addon            = <<EOT
+  landline_sg_ids = [
+    aws_security_group.landfill_ssh.id,
+    aws_security_group.landfill_icmp.id
+  ]
+  public_key         = file(var.AWS_PUBLIC_KEY_PATH)
+  ansible_public_key = var.AWS_ANSIBLE_KEY
+  depends_on         = [module.woprPub, aws_route53_record.woprPubNSPriv]
+  cloud_init_addon   = <<EOT
 sudo hostnamectl hostname wopr2.local.aws.${var.AWS_MYDOMAIN}
 sudo sh -c 'echo "Acquire::http::proxy \"http://${module.woprPub.wopr4_internal_ip}:8888/\";" > /etc/apt/apt.conf.d/60tinyproxy.conf'
 timeout 300 sh -c 'export http_proxy=http://${module.woprPub.wopr4_internal_ip}:8888; curl aws.com; while [ $? != 0 ]; do sleep 30; curl aws.com; done '
