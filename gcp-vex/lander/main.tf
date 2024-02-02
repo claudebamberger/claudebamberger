@@ -21,23 +21,14 @@ data "google_dns_managed_zone" "env_dns_zone" {
 ##########
 # DONE: module https://registry.terraform.io/modules/terraform-google-modules/network/google/latest
 module "vpc" {
-  source  = "terraform-google-modules/network/google"
-  version = "~> 7.2"
+  source = "terraform-google-modules/network/google"
+  #version = "~> 7.2"
+  version = "~> 9.0"
 
   project_id   = var.GCP_PROJECT_ID
   network_name = "wopr-vpc"
   routing_mode = "GLOBAL"
   subnets = [
-    {
-      subnet_name   = "lander-public"
-      subnet_ip     = "${var.GCP_LANDER_SUBNET_PUBLIC}"
-      subnet_region = "${var.GCP_REGION}"
-    },
-    {
-      subnet_name   = "lander-private"
-      subnet_ip     = "${var.GCP_LANDER_SUBNET_PRIVATE}"
-      subnet_region = "${var.GCP_REGION}"
-    }
   ]
   routes = [
     {
@@ -48,121 +39,24 @@ module "vpc" {
       next_hop_internet = "true"
     }
   ]
-  firewall_rules = [
-    {
-      name        = "landline-external"
-      description = "firewall for ssh access"
-      direction   = "INGRESS"
-      # https://www.middlewareinventory.com/blog/create-linux-vm-in-gcp-with-terraform-remote-exec/#compute_firewall_block_-_Allow_SSH_and_HTTPS_connections
-      priority = 1000
-      allow = [{
-        ports    = ["22"]
-        protocol = "tcp"
-      }]
-      target_tags = ["ssh-admin"]
-      # source_ranges nécessaire car pas de source_tags (un des 2 obligatoire)
-      ranges = ["${var.GCP_SECURE_CIDR}"]
-    },
-    {
-      name        = "landline-external-e"
-      description = "firewall for ssh access"
-      direction   = "EGRESS"
-      priority    = 1000
-      allow = [{
-        ports    = ["80", "443"]
-        protocol = "tcp"
-      }]
-      ranges = ["0.0.0.0/0"]
-    },
-    {
-      name        = "landline-internal"
-      description = "firewall for ssh access"
-      direction   = "INGRESS"
-      priority    = 1000
-      allow = [{
-        ports    = ["22"]
-        protocol = "tcp"
-        },
-        {
-          protocol = "icmp"
-      }]
-      target_tags = ["ssh-internal"]
-      source_tags = ["ssh-internal"]
-      # pas forcément utile avec les tags, instable en plan: source_ranges = ["${var.GCP_LANDER_SUBNET_PRIVATE}", "${var.GCP_LANDER_SUBNET_PUBLIC}"]
-    },
-    {
-      name        = "landline-internal-e"
-      description = "firewall for ssh access"
-      direction   = "EGRESS"
-      priority    = 1000
-      allow = [{
-        ports    = ["22"]
-        protocol = "tcp"
-        },
-        {
-          protocol = "icmp"
-      }]
-      target_tags = ["ssh-internal"]
-      ranges = ["0.0.0.0/0"]
-    },
-    {
-      name        = "proxyland-internal"
-      description = "firewall for proxy access"
-      direction   = "INGRESS"
-      priority    = 1000
-      allow = [{
-        ports    = ["8888"]
-        protocol = "tcp"
-      }]
-      target_tags = ["wopr-pub"]
-      source_tags = ["wopr-priv"]
-      # pas forcément utile avec les tags, instable en plan: source_ranges = ["${var.GCP_LANDER_SUBNET_PRIVATE}"]
-    },
-    {
-      name        = "proxyland-internal-e"
-      description = "firewall for proxy access"
-      direction   = "EGRESS"
-      priority    = 1000
-      allow = [{
-        ports    = ["8888"]
-        protocol = "tcp"
-      }]
-      ranges = ["0.0.0.0/0"]
-    },
-    {
-      name        = "no-other-ingress"
-      description = "no other ingress"
-      direction   = "INGRESS"
-      priority    = 65000
-      deny = [{
-        protocol = "tcp"
-        },
-        {
-          protocol = "udp"
-        },
-        {
-          protocol = "icmp"
-      }]
-      ranges = ["0.0.0.0/0"]
-    },
-    {
-      name        = "no-other-egress"
-      description = "no other egress"
-      direction   = "EGRESS"
-      priority    = 65000
-      deny = [{
-        protocol = "tcp"
-        },
-        {
-          protocol = "udp"
-        },
-        {
-          protocol = "icmp"
-      }]
-      ranges = ["0.0.0.0/0"]
-    }
-  ]
 }
+resource "google_compute_subnetwork" "lander_pub" {
+  network       = module.vpc.network_id
+  name          = "lander-public"
+  description   = ""
+  stack_type    = "IPV4_ONLY"
+  ip_cidr_range = var.GCP_LANDER_SUBNET_PUBLIC
+  region        = var.GCP_REGION
+}
+resource "google_compute_subnetwork" "lander_priv" {
+  network       = module.vpc.network_id
+  name          = "lander-private"
+  description   = ""
+  stack_type    = "IPV4_ONLY"
+  ip_cidr_range = var.GCP_LANDER_SUBNET_PRIVATE
+  region        = var.GCP_REGION
+}
+
 resource "google_compute_address" "admin_public_ip" {
   name       = "admin-public-ip"
   project    = var.GCP_PROJECT_ID
@@ -188,8 +82,7 @@ resource "google_compute_instance" "woprPub" {
     }
   }
   network_interface {
-    //subnetwork = google_compute_subnetwork.lander-public.id
-    subnetwork = module.vpc.subnets_ids[0]
+    subnetwork = google_compute_subnetwork.lander_pub.id
     access_config {
       nat_ip = google_compute_address.admin_public_ip.address
     }
@@ -238,8 +131,7 @@ resource "google_compute_instance" "woprPriv" {
     }
   }
   network_interface {
-    //subnetwork = google_compute_subnetwork.lander-private.id
-    subnetwork = module.vpc.subnets_ids[1]
+    subnetwork = google_compute_subnetwork.lander_priv.id
   }
   metadata = {
     enable-oslogin = false

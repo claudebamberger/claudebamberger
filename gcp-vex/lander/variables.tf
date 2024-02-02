@@ -29,12 +29,12 @@ variable "GCP_LANDER_CIDR_BLOCK" {
   default     = "192.168.88.0/24"
 }
 variable "GCP_LANDER_SUBNET_PUBLIC" {
-  description = "CIDR correspondant au sous-réseau"
+  description = "CIDR correspondant au sous-réseau public"
   type        = string
   default     = "192.168.88.16/28"
 }
 variable "GCP_LANDER_SUBNET_PRIVATE" {
-  description = "CIDR correspondant au sous-réseau"
+  description = "CIDR correspondant au sous-réseau privé"
   type        = string
   default     = "192.168.88.0/28"
 }
