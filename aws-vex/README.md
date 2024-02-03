@@ -20,7 +20,7 @@
   * ``aws ec2 run-instances`` (attention, creates)
 
 ## Terraform
-* télécharger [terraform](https://releases.hashicorp.com/terraform/1.4.6/terraform_1.4.6_darwin_arm64.zip) et installer dans ``/usr/local/bin/tf``
+* télécharger [terraform](https://releases.hashicorp.com/terraform/1.4.6/terraform_1.4.6_darwin_arm64.zip) et installer dans ``/usr/local/bin/tf``(avec un lien /usr/local/terraform/…)
 * prévoir un .gitignore plus haut (ou racine) avec
     ```
     .terraform/
@@ -130,7 +130,12 @@ par exemple
                   .-/+oossssoo+/-.
     ubuntu@ip-192-168-88-26:~$ 
     ```
-
+## Terraform docs
+* télécharger [terraform-docs](https://github.com/terraform-docs/terraform-docs/releases/download/v0.17.0/terraform-docs-v0.17.0-darwin-arm64.tar.gz) et installer dans ``/usr/local/bin/tf-docs`` (avec un lien /usr/local/terraform/…)
+* faire 
+    ```
+    tf-docs markdown .
+    ```
 ### Alternative avec module de la Registry
   * on peut remplacer le module "landfill" par un module vpc de la registry
     ```
