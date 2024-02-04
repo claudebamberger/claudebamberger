@@ -177,3 +177,69 @@
     att-wopr-data --> mount(remote-exec mount)
     att-wopr-data -.-> wopr_data
   ```
+
+  ### Auto-documentation
+  // generated with tf-docs -c .terraform-docs.yml . //
+  [//]: # (BEGIN_TF_DOCS)
+## Requirements
+
+| Name | Version |
+|------|---------|
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >=1.7, <2.0 |
+| <a name="requirement_google"></a> [google](#requirement\_google) | >=5.0, <6.0 |
+
+## Providers
+
+| Name | Version |
+|------|---------|
+| <a name="provider_google"></a> [google](#provider\_google) | 5.13.0 |
+
+## Modules
+
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_vpc"></a> [vpc](#module\_vpc) | terraform-google-modules/network/google | ~> 9.0 |
+
+## Resources
+
+| Name | Type |
+|------|------|
+| [google_compute_address.admin_public_ip](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_address) | resource |
+| [google_compute_firewall.landline-external-e](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_firewall) | resource |
+| [google_compute_firewall.landline-external-i](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_firewall) | resource |
+| [google_compute_firewall.landline-internal-e](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_firewall) | resource |
+| [google_compute_firewall.landline-internal-i](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_firewall) | resource |
+| [google_compute_firewall.no-other-egress](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_firewall) | resource |
+| [google_compute_firewall.no-other-ingress](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_firewall) | resource |
+| [google_compute_firewall.proxyland-internal-e](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_firewall) | resource |
+| [google_compute_firewall.proxyland-internal-i](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_firewall) | resource |
+| [google_compute_instance.woprPriv](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_instance) | resource |
+| [google_compute_instance.woprPub](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_instance) | resource |
+| [google_compute_subnetwork.lander_priv](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork) | resource |
+| [google_compute_subnetwork.lander_pub](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork) | resource |
+| [google_dns_record_set.WoprPubDNS](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/dns_record_set) | resource |
+| [google_compute_disk.wopr_data](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_disk) | data source |
+| [google_compute_zones.available](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_zones) | data source |
+| [google_dns_managed_zone.env_dns_zone](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/dns_managed_zone) | data source |
+
+## Inputs
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_GCP_LANDER_CIDR_BLOCK"></a> [GCP\_LANDER\_CIDR\_BLOCK](#input\_GCP\_LANDER\_CIDR\_BLOCK) | CIDR correspondant au réseau | `string` | `"192.168.88.0/24"` | no |
+| <a name="input_GCP_LANDER_SUBNET_PRIVATE"></a> [GCP\_LANDER\_SUBNET\_PRIVATE](#input\_GCP\_LANDER\_SUBNET\_PRIVATE) | CIDR correspondant au sous-réseau privé | `string` | `"192.168.88.0/28"` | no |
+| <a name="input_GCP_LANDER_SUBNET_PUBLIC"></a> [GCP\_LANDER\_SUBNET\_PUBLIC](#input\_GCP\_LANDER\_SUBNET\_PUBLIC) | CIDR correspondant au sous-réseau public | `string` | `"192.168.88.16/28"` | no |
+| <a name="input_GCP_PRIVATE_KEY_PATH"></a> [GCP\_PRIVATE\_KEY\_PATH](#input\_GCP\_PRIVATE\_KEY\_PATH) | chemin de la clé privée (pour la région), exported shell | `string` | n/a | yes |
+| <a name="input_GCP_PROJECT_ID"></a> [GCP\_PROJECT\_ID](#input\_GCP\_PROJECT\_ID) | Projet GCP visé, exported shell | `string` | n/a | yes |
+| <a name="input_GCP_PUBLIC_KEY_PATH"></a> [GCP\_PUBLIC\_KEY\_PATH](#input\_GCP\_PUBLIC\_KEY\_PATH) | chemin de la clé publique (pour la région), exported shell | `string` | n/a | yes |
+| <a name="input_GCP_REGION"></a> [GCP\_REGION](#input\_GCP\_REGION) | région GCP visée, exported shell | `string` | n/a | yes |
+| <a name="input_GCP_SECURE_CIDR"></a> [GCP\_SECURE\_CIDR](#input\_GCP\_SECURE\_CIDR) | CIDR sûr en entrée, exported shell | `string` | n/a | yes |
+| <a name="input_GCP_ZONE_DNS"></a> [GCP\_ZONE\_DNS](#input\_GCP\_ZONE\_DNS) | nom de la zone DNS déclarée, exported shell | `string` | n/a | yes |
+
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| <a name="output_publicAdminIp"></a> [publicAdminIp](#output\_publicAdminIp) | ######### ## Output ######### |
+
+[//]: # (END_TF_DOCS)

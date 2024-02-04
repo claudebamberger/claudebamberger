@@ -281,7 +281,71 @@ par exemple
     public_ip -.- output
 
   ```
-  ## REFERENCES 
+  ### Auto-documentation
+  // generated with tf-docs -c .terraform-docs.yml . //
+  [//]: # (BEGIN_TF_DOCS)
+## Requirements
+
+| Name | Version |
+|------|---------|
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >=1.7, <2.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >=5.0, <6.0 |
+
+## Providers
+
+| Name | Version |
+|------|---------|
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.34.0 |
+
+## Modules
+
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_vpc"></a> [vpc](#module\_vpc) | terraform-aws-modules/vpc/aws | >=5.0,<6.0 |
+| <a name="module_woprPriv"></a> [woprPriv](#module\_woprPriv) | ./modules/wopr | n/a |
+| <a name="module_woprPub"></a> [woprPub](#module\_woprPub) | ./modules/wopr | n/a |
+
+## Resources
+
+| Name | Type |
+|------|------|
+| [aws_route53_record.woprPrivNSPriv](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
+| [aws_route53_record.woprPubNSPriv](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
+| [aws_route53_record.woprPubNSPub](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
+| [aws_route53_zone.primary](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_zone) | resource |
+| [aws_route53_zone.private](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_zone) | resource |
+| [aws_security_group.landfill_icmp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group.landfill_proxy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group.landfill_ssh](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group.landline_ssh](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_volume_attachment.ebs_att](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/volume_attachment) | resource |
+| [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
+| [aws_ebs_volumes.wopr_data](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ebs_volumes) | data source |
+
+## Inputs
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_AWS_ANSIBLE_KEY"></a> [AWS\_ANSIBLE\_KEY](#input\_AWS\_ANSIBLE\_KEY) | clé publique ansible | `string` | n/a | yes |
+| <a name="input_AWS_LANDFILL_CIDR_BLOCK"></a> [AWS\_LANDFILL\_CIDR\_BLOCK](#input\_AWS\_LANDFILL\_CIDR\_BLOCK) | CIDR correspondant au réseau | `string` | `"192.168.88.0/24"` | no |
+| <a name="input_AWS_LANDFILL_SUBNET_PRIVE"></a> [AWS\_LANDFILL\_SUBNET\_PRIVE](#input\_AWS\_LANDFILL\_SUBNET\_PRIVE) | CIDR correspondant au sous-réseau privé | `string` | `"192.168.88.0/28"` | no |
+| <a name="input_AWS_LANDFILL_SUBNET_PUBLIC"></a> [AWS\_LANDFILL\_SUBNET\_PUBLIC](#input\_AWS\_LANDFILL\_SUBNET\_PUBLIC) | CIDR correspondant au sous-réseau public | `string` | `"192.168.88.16/28"` | no |
+| <a name="input_AWS_MYDOMAIN"></a> [AWS\_MYDOMAIN](#input\_AWS\_MYDOMAIN) | Domaine racine des noms publics | `string` | n/a | yes |
+| <a name="input_AWS_PRIVATE_KEY_PATH"></a> [AWS\_PRIVATE\_KEY\_PATH](#input\_AWS\_PRIVATE\_KEY\_PATH) | chemin de la clé privée (pour la région), exported shell | `string` | n/a | yes |
+| <a name="input_AWS_PUBLIC_KEY_PATH"></a> [AWS\_PUBLIC\_KEY\_PATH](#input\_AWS\_PUBLIC\_KEY\_PATH) | chemin de la clé publique (pour la région), exported shell | `string` | n/a | yes |
+| <a name="input_AWS_REGION"></a> [AWS\_REGION](#input\_AWS\_REGION) | région AWS visée, exported shell | `string` | n/a | yes |
+| <a name="input_AWS_SECURE_CIDR"></a> [AWS\_SECURE\_CIDR](#input\_AWS\_SECURE\_CIDR) | CIDR sûr en entrée, exported shell | `string` | n/a | yes |
+
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| <a name="output_debug"></a> [debug](#output\_debug) | n/a |
+| <a name="output_domain_name_servers"></a> [domain\_name\_servers](#output\_domain\_name\_servers) | ######### ## Outputs (readable) ######### |
+
+[//]: # (END_TF_DOCS)
+
+  ### REFERENCES 
   - [Terraform CLI](https://developer.hashicorp.com/terraform/cli)
   - [Provider AWS Terraform Hashicorp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
   - [Ecriture de modules Terraform](https://developer.hashicorp.com/terraform/language/modules/develop)
