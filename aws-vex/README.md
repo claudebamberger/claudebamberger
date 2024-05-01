@@ -188,27 +188,28 @@ par exemple
 #### main  
   ```mermaid
     graph TD
-    z[.zprofile for exemple] ==> variables
-    variables --o TF_VAR_AWS_REGION>TF_VAR_AWS_REGION]
-    variables --o TF_VAR_AWS_PRIVATE_KEY_PATH>TF_VAR_AWS_PRIVATE_KEY_PATH]
-    variables --o TF_VAR_AWS_PUBLIC_KEY_PATH>TF_VAR_AWS_PUBLIC_KEY_PATH]
-    variables --o TF_VAR_AWS_SECURE_CIDR>TF_VAR_AWS_SECURE_CIDR]
+      z[.zprofile for exemple] ==> variables
+      variables --o TF_VAR_AWS_REGION>TF_VAR_AWS_REGION]
+      variables --o TF_VAR_AWS_PRIVATE_KEY_PATH>TF_VAR_AWS_PRIVATE_KEY_PATH]
+      variables --o TF_VAR_AWS_PUBLIC_KEY_PATH>TF_VAR_AWS_PUBLIC_KEY_PATH]
+      variables --o TF_VAR_AWS_SECURE_CIDR>TF_VAR_AWS_SECURE_CIDR]
+      
+      TF_VAR_AWS_REGION --> c1[[for exemple 'us-east-1']]
+      TF_VAR_AWS_PRIVATE_KEY_PATH --> c2[[a path to local .ssh for example, pem/pub ou other format]]
+      TF_VAR_AWS_PUBLIC_KEY_PATH --> c2
+      TF_VAR_AWS_SECURE_CIDR --> c3[[les IPs autorisées à entrer en ssh]]
     
-    TF_VAR_AWS_REGION --> c1[[for exemple 'us-east-1']]
-    TF_VAR_AWS_PRIVATE_KEY_PATH --> c2[[a path to local .ssh for example, pem/pub ou other format]]
-    TF_VAR_AWS_PUBLIC_KEY_PATH --> c2
-    TF_VAR_AWS_SECURE_CIDR --> c3[[les IPs autorisées à entrer en ssh]]
-
-    land/variables.tf --o AWS_LANDFILL_CIDR_BLOCK
-    land/variables.tf --o AWS_LANDFILL_SUBNET
-    
-    variables ----.alimentent.-> land/variables.tf ==> main.tf
-    main.tf --> wopr4-vex-key-pair[wopr4-vex-key-pair\nkeypair to connect]
-    subgraph suite
-      main.tf --> module/landfill/landfill.tf
-      main.tf ====> output[output public IP, public ssh key]
-      main.tf --> module/wopr/wopr.tf
-    end
+      land/variables.tf --o AWS_LANDFILL_CIDR_BLOCK
+      land/variables.tf --o AWS_LANDFILL_SUBNET
+      
+      variables ----> land/variables.tf 
+      land/variables.tf ==> main.tf[main.tf]
+      main.tf --> wopr4-vex-key-pair[wopr4-vex-key-pair\nkeypair to connect] 
+      subgraph suite
+        main.tf --> module/landfill/landfill.tf
+        main.tf ====> output
+        main.tf --> module/wopr/wopr.tf
+      end
   ```
 #### landfill
   ```mermaid
