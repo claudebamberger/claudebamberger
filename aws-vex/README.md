@@ -202,7 +202,7 @@ par exemple
     land/variables.tf --o AWS_LANDFILL_CIDR_BLOCK
     land/variables.tf --o AWS_LANDFILL_SUBNET
     
-    variables ----.alimentent.-> land/variables.tf ==> main.tf{main.tf}
+    variables ----.alimentent.-> land/variables.tf ==> main.tf {main.tf}
     main.tf --> wopr4-vex-key-pair[wopr4-vex-key-pair\nkeypair to connect]
     subgraph suite
       main.tf --> module/landfill/landfill.tf
