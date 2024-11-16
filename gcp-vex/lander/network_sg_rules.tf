@@ -85,8 +85,9 @@ resource "google_compute_firewall" "proxyland-internal-i" {
     ports    = ["8888"]
     protocol = "tcp"
   }
-  target_tags = ["wopr-pub"]
-  source_tags = ["wopr-priv"]
+  target_tags   = ["wopr-pub"]
+  source_tags   = ["wopr-priv"]
+  source_ranges = ["${var.GCP_LANDER_SUBNET_PRIVATE}"]
 }
 
 resource "google_compute_firewall" "proxyland-internal-e" {
