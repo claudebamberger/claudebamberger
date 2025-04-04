@@ -1,18 +1,18 @@
 ### Terraform (tool) https://developer.hashicorp.com/terraform/install
-# V1.7.2
+# V1.7.2 -...-> 1.11.3 (2025-04)
 terraform {
   # version tf
-  required_version = ">=1.7, <2.0"
+  required_version = ">=1.11, <2.0"
   required_providers {
     google = {
       # https://registry.terraform.io/providers/hashicorp/google/latest
-      # 5.14
+      # 5.14 -> 6.28 (2025-04)
       source  = "hashicorp/google"
-      version = ">=5.0, <6.0"
+      version = ">=6.28, <7.0"
     }
     # aussi module vpc
     # source = "terraform-google-modules/network/google"
-    # version = "~> 9.0"
+    # version = "~> 9.0" -> 9.3 (2025-04, even 10.0 exists)
   }
 }
 provider "google" {

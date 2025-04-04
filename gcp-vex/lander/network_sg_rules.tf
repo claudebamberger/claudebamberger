@@ -15,6 +15,8 @@ resource "google_compute_firewall" "landline-external-i" {
   }
   target_tags = ["ssh-admin"]
   # source_ranges nécessaire car pas de source_tags (un des 2 obligatoire)
+  # NB :  si GCP_SECURE_CIDR est 0.0.0.0, il y a un warning 
+  #       *** NORMAL source-range ISSUE on landline-external
   source_ranges = ["${var.GCP_SECURE_CIDR}"]
 }
 resource "google_compute_firewall" "landline-external-e" {
