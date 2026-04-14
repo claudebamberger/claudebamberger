@@ -10,10 +10,10 @@ terraform {
       # 5.14 -> 6.28 (2025-04)
       # 6.28 -> 7.28 (2026-04)
       source  = "hashicorp/google"
-      version = ">=6.28, <7.0"
-      #version = ">=7.28, <8.0"
+      # version = ">=6.28, <7.0"
+      version = ">=7.28, <8.0"
     }
-    # aussi module vpc
+    # aussi module vpc dans main.tf module vpc
     # source = "terraform-google-modules/network/google"
     # version = "~> 9.0" -> 9.3 (2025-04, even 10.0 exists)
     # version = "9.3" -> "~>18.0" (2026-04)

@@ -23,8 +23,8 @@ data "google_dns_managed_zone" "env_dns_zone" {
 module "vpc" {
   source = "terraform-google-modules/network/google"
   #version = "~> 7.2"
-  version = "~> 9.0"
-  #version = "~> 18.0"
+  #version = "~> 9.0"
+  version = "~> 18.0"
 
   project_id   = var.GCP_PROJECT_ID
   network_name = "wopr-vpc"
@@ -36,7 +36,7 @@ module "vpc" {
       name              = "egress-internet"
       description       = "route through IGW to access internet"
       destination_range = "0.0.0.0/0"
-      tags              = "egress-inet"
+      tags              = ["egress-inet"]
       next_hop_internet = "true"
     }
   ]
@@ -95,7 +95,7 @@ resource "google_compute_instance" "woprPub" {
     ssh-keys       = "ansible:${file(var.GCP_PUBLIC_KEY_PATH)}\nmex:${file(var.GCP_PUBLIC_KEY_PATH)}"
   }
   provisioner "remote-exec" {
-    # TODO: risque de ne pas marcher
+    # TODO: risque de ne pas marcher, il faut mettre ansible sudoer
     connection {
       # user is added to sudoers (good)
       host        = google_compute_address.admin_public_ip.address
@@ -109,7 +109,7 @@ resource "google_compute_instance" "woprPub" {
       "sudo bash -c 'export DEBIAN_FRONTEND=noninteractive && apt -yq update && apt -yq upgrade'",
       "sudo bash -c 'export DEBIAN_FRONTEND=noninteractive && apt -yq install cowsay zip unzip net-tools inetutils-ping dnsutils vim ufw cron ansible neofetch'",
       "sudo apt -yq install tinyproxy",
-      "sudo sh -c 'cat /etc/tinyproxy/tinyproxy.conf | sed \"s/\\#Allow 192\\.168\\.0\\.0\\/16/Allow ${google_compute_instance.woprPriv.network_interface[0].network_ip}/g\" > /etc/tinyproxy/tinyproxy.conf.tmp'",
+      "sudo sh -c 'cat /etc/tinyproxy/tinyproxy.conf | sed \"s/\\#Allow 192\\.168\\.0\\.0\\/16/Allow ${var.GCP_LANDER_SUBNET_PRIVATE}/g\" > /etc/tinyproxy/tinyproxy.conf.tmp'",
       "sudo sh -c 'cat /etc/tinyproxy/tinyproxy.conf.tmp | sed \"s/\\#Allow 10\\.0\\.0\\.0\\/8/#Allow 10.0.0.0\\/8/g\" > /etc/tinyproxy/tinyproxy.conf'",
       "sudo rm /etc/tinyproxy/tinyproxy.conf.tmp",
       "sudo chown tinyproxy:tinyproxy /var/log/tinyproxy",
@@ -159,10 +159,10 @@ resource "google_compute_instance" "woprPriv" {
     }
     inline = [
       "sudo echo $(date)> /tmp/provisioner",
-      "sudo sh -c 'echo Acquire::http::proxy http://wopr-pub/:8888/; > /etc/apt/apt.conf.d/60tinyproxy.conf'",
+      "sudo sh -c 'echo Acquire::http::proxy http://wopr-pub:8888/; > /etc/apt/apt.conf.d/60tinyproxy.conf'",
       "timeout 300 sh -c 'export http_proxy=http://wopr-pub:8888; curl aws.com; while [ $? != 0 ]; do sleep 30; curl aws.com; done '",
       "sudo apt-get update && sudo apt-get full-upgrade -y",
-      "sudo apt-get install -y git cowsay zip unzip net-tools inetutils-ping dnsutils vim ufw cron ansible ansible-lint neofetch ",
+      "sudo apt-get install -y byobu language-pack-en language-pack-en-base git cowsay zip unzip net-tools inetutils-ping dnsutils vim ufw cron ansible ansible-lint neofetch ",
       "sudo sh -c 'echo export http_proxy=http://wopr-pub:8888 >> /etc/profile'",
       "sudo mount /dev/sdb /wopr4",
       "sudo grep 'wopr4' /etc/fstab; if [ $? != 0 ]; then sudo echo $(blkid /dev/sdb|grep 'LABEL=.wopr-data'|col3) /wopr4 ext4 defaults,nofail 0 1 > /tmp/prepfstab; sudo sh -c 'cat /tmp/prepfstab >> /etc/fstab' ; fi",
@@ -179,6 +179,7 @@ resource "google_compute_instance" "woprPriv" {
     source      = data.google_compute_disk.wopr_data.id
   }
 }
+
 ##########
 ### DNS registration
 ##########

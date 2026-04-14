@@ -7,16 +7,19 @@
 * untar, copié dans ``~/.gcp/google-cloud-sdk``
 * lancer ``./google-cloud-sdk/install.sh``
 * qui va renseigner ``.zprofile`` et corriger manuellement
-* penser à faire 
-  ```
+* penser à faire
+
+  ```bash
   > gcloud components install log-streaming minikube terraform-tools \
           config-connector app-engine-java \
           app-engine-php gke-gcloud-auth-plugin kubectl
   ```
+
 * Créer le projet dans la console (PROJECT_ID -> nom-numéro)
 * Dans le projet activer Compute Engine
 * se connecter avec
-  ```
+
+  ```bash
   > gcloud auth login
   You are now logged in as [xxx@yyyy.zzz]
   > gcloud projects list
@@ -25,9 +28,11 @@
   ```
 
 ## Terraform
+
 * télécharger [terraform](https://releases.hashicorp.com/terraform/1.4.6/terraform_1.4.6_darwin_arm64.zip) et installer dans ``/usr/local/bin/tf`` (avec un lien /usr/local/terraform/…)
 * prévoir un .gitignore plus haut (ou racine) avec
-    ```
+
+    ```ini
     .terraform/
     .terraform/**
     .terraform.*
@@ -36,7 +41,8 @@
     ```
 
 * faire un ``main.tf`` dans un répertoire ``land`` pour vérifier
-  ```
+
+  ```HCL
   terraform {
     required_providers {
       google = {
@@ -86,12 +92,14 @@
     zone = data.google_compute_zones.available.names[0]
   }
   ```
-* on peut se connecter avec 
+
+* on peut se connecter avec
 
   ``gcloud compute ssh --zone "[retrouver la zone]" "wopr" --project "[PROJECT_ID]"``
 
 * résultat
-  ```
+
+  ```bash
   mex@wopr:~$ neofetch 
         _,met$$$$$gg.          mex@wopr 
       ,g$$$$$$$$$$$$$$$P.       -------- 
@@ -113,14 +121,18 @@
 
   mex@wopr:~$ 
   ```  
+
 ## Terraform docs
+
 * télécharger [terraform-docs](https://github.com/terraform-docs/terraform-docs/releases/download/v0.17.0/terraform-docs-v0.17.0-darwin-arm64.tar.gz) et installer dans ``/usr/local/bin/tf-docs`` (avec un lien /usr/local/terraform/…)
-* faire 
-    ```
+* faire
+
+    ```bash
     tf-docs markdown .
     ```
 
 ### Documentation des ressources dans l'exemple
+
 ```mermaid
     graph LR
     main.tf --> variables.tf
@@ -178,9 +190,11 @@
     att-wopr-data -.-> wopr_data
   ```
 
-  ### Auto-documentation
+### Auto-documentation
+
   // generated with tf-docs -c .terraform-docs.yml . //
   [//]: # (BEGIN_TF_DOCS)
+
 ## Requirements
 
 | Name | Version |
