@@ -21,6 +21,18 @@ variable "AMI_Ubuntu_LTS22_arm64" {
     eu-west-3    = "ami-0bd3b255f1beeae5e"
   }
 }*/
+/* <imageId>ami-0fae77c9f45683e75</imageId>
+   <imageLocation>amazon/ubuntu-minimal/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-minimal-20260313</imageLocation>
+   <imageOwnerId>099720109477</imageOwnerId>
+   <creationDate>2026-03-14T22:29:06.000Z</creationDate>
+   <architecture>x86_64</architecture>
+   <name>ubuntu-minimal/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-minimal-20260313</name>
+   <description>Canonical, Ubuntu Minimal, 24.04, amd64 noble image</description>
+*/
+/* 
+  IL FAUT UTILISER tf state taint pour "forcer" l'upgrade d'image
+*/
+
 data "aws_ami" "ubuntu" {
   # La dernière version OK
   most_recent = true
@@ -31,11 +43,11 @@ data "aws_ami" "ubuntu" {
   }
   filter {
     name   = "name"
-    values = ["*22*"]
+    values = ["*24*"]
   }
   filter {
     name   = "description"
-    values = ["*Canonical*Ubuntu*Minimal*22*LTS*"]
+    values = ["*Canonical*Ubuntu*Minimal*24*LTS*"]
   }
 }
 /* data "aws_ami" "stable_ubuntu" {

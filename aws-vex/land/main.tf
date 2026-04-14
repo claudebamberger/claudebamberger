@@ -3,8 +3,8 @@
 ##########
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = ">=5.0,<6.0"
-
+  #version = ">=5.0,<6.0"
+  version = ">=6.0,<7.0" # 6.6.1 (2026-04)
   tags            = { Environment = "test" }
   cidr            = var.AWS_LANDFILL_CIDR_BLOCK
   private_subnets = ["${var.AWS_LANDFILL_SUBNET_PRIVE}"]

@@ -24,6 +24,7 @@ module "vpc" {
   source = "terraform-google-modules/network/google"
   #version = "~> 7.2"
   version = "~> 9.0"
+  #version = "~> 18.0"
 
   project_id   = var.GCP_PROJECT_ID
   network_name = "wopr-vpc"
@@ -77,7 +78,8 @@ resource "google_compute_instance" "woprPub" {
   boot_disk {
     initialize_params {
       #image = "debian-cloud/debian-11"
-      image = "ubuntu-os-cloud/ubuntu-2204-lts"
+      #image = "ubuntu-os-cloud/ubuntu-2204-lts"
+      image = "ubuntu-os-cloud/ubuntu-minimal-2404-lts-amd64" 
       #https://gmusumeci.medium.com/how-to-deploy-an-ubuntu-linux-vm-instance-in-gcp-using-terraform-b94d0ed3a3a4
     }
   }
@@ -127,7 +129,8 @@ resource "google_compute_instance" "woprPriv" {
   machine_type = "e2-micro"
   boot_disk {
     initialize_params {
-      image = "ubuntu-os-cloud/ubuntu-2204-lts"
+      # image = "ubuntu-os-cloud/ubuntu-2204-lts"
+      image = "ubuntu-os-cloud/ubuntu-minimal-2404-lts-amd64"
     }
   }
   network_interface {

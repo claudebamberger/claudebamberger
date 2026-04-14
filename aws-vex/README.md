@@ -1,13 +1,16 @@
 # aws cli v2 commands & terraform
 
 ## CLI v2
+
 * télécharger [awscliv2.pkg](https://awscli.amazonaws.com/AWSCLIV2.pkg) et installer
 * vérifier que la configuration générale est bien faite dans ``~/.aws/config`` (NB ``chmod 600``)
-  ```
+
+  ```ini
   [default]
   region = …
   output = json
-  ``` 
+  ```
+
   * ``[default]``(on peut mettre d'autres profiles par ``profile [nom du profile]`` ou/et ``sso-session [nom profile]``)
   * ``region``par exemple us-east-1 ou une autre
   * ``output`` peut aussi être ``text``
@@ -20,9 +23,11 @@
   * ``aws ec2 run-instances`` (attention, creates)
 
 ## Terraform
+
 * télécharger [terraform](https://releases.hashicorp.com/terraform/1.4.6/terraform_1.4.6_darwin_arm64.zip) et installer dans ``/usr/local/bin/tf``(avec un lien /usr/local/terraform/…)
 * prévoir un .gitignore plus haut (ou racine) avec
-    ```
+
+    ```ini
     .terraform/
     .terraform/**
     .terraform.*
@@ -31,7 +36,8 @@
     ```
 
 * faire un ``main.tf`` dans un répertoire ``land`` pour vérifier
-  ```
+
+  ```HCL
   terraform {
     required_providers {
       aws = {
@@ -42,44 +48,55 @@
     required_version = ">= 1.2.0"
   }
   ```
+
 * lancer ``tf init`` dans ``land`` (*<span style="color:darkgreen">Terraform has been successfully initialized!</span>*)
 * on peut utiliser ``tf fmt`` puis ``tf validate`` avant ``tf apply`` ou/et ``tf plan`` et inspecter ce qu'il ferait
 * si on veut upgrader, lancer ``tf init -upgrade`` dans ``land``
 
 ### Terraform plus sérieusement
+
 * on peut exporter des variables, par exemple depuis ``~/.zprofile``, en les nommant ``TF_VAR_[nom]``
-par exemple 
-  ```
+par exemple
+
+  ```HCL
   TF_VAR_AWS_REGION=us-east-1
   ```
+
 * ensuite on déclare les variables pour les lier dans ``variables.tf`` (par convention)
-  ```
+
+  ```HCL
   variable "AWS_REGION" {
     description = "région AWS visée, exported shell"
     type        = string
   }
   ```
+
 * faire un ``provider.tf`` au même niveau avec
-  ```
+
+  ```HCL
   provider "aws" {
     region = var.AWS_REGION
   }
   ```
-* on décrit les ressources dans main.tf 
+
+* on décrit les ressources dans main.tf
 
 * on peut modulariser avec des sous-répertoires dans la même logique
   * créer un sous-répertoire ``modules`` (par exemple)
   * y créer un sous-répertoire ``landfill`` (pour l'exemple pour le vpc et les aspects réseau)
   * dans ``landfill`` créer ``variables.tf`` avec les variables nécessaires au module
-    ```
+
+    ```HCL
     variable "secure_cidr" {
       description = "CIDR sûr en entrée, exported shell"
       type        = string
     }
     ```
+
   * dans ``landfill`` créer ``landfill.tf`` qui va décrire les ressources
   * dans ``landfill`` créer ``output.tf`` qui va produire les objets en sortie (ici les id vpc, sg et subnet, on peut ajouter des ``depends_on = [ ... ]`` s'il y a des dépendances indirectes)
-    ```
+
+    ```HCL
     output "landline_sg_ssh_id" {
       value = "${aws_security_group.landline_ssh.id}"
     }
@@ -90,23 +107,29 @@ par exemple
       value = "${aws_vpc.landfill.id}"
     }
     ```
+
   * dans ``main.tf`` on peut appeler le module par
-    ```
+
+    ```HCL
     module "landfill" {
       source = "./modules/landfill"
       secure_cidr = "${var.AWS_SECURE_CIDR}"
     }
     ```
-    et ”consommer“ le résultat par 
-    ```
+
+    et ”consommer“ le résultat par
+
+    ```HCL
     subnet_id = module.landfill.landline_subnet_id
-    ``` 
+    ```
+
   * on peut enfin produire des sorties par output comme le module (directement dans ``main.tf``)
 
   * enfin on fait de même avec la création d'instance (avec son IP de contact)
 
   * résultat
-    ```
+
+    ```shell
     ubuntu@ip-192-168-88-26:~$ neofetch
                   .-/+oossssoo+/-.               ubuntu@ip-192-168-88-26 
               `:+ssssssssssssssssss+:`           ----------------------- 
@@ -130,15 +153,21 @@ par exemple
                   .-/+oossssoo+/-.
     ubuntu@ip-192-168-88-26:~$ 
     ```
+
 ## Terraform docs
+
 * télécharger [terraform-docs](https://github.com/terraform-docs/terraform-docs/releases/download/v0.17.0/terraform-docs-v0.17.0-darwin-arm64.tar.gz) et installer dans ``/usr/local/bin/tf-docs`` (avec un lien /usr/local/terraform/…)
-* faire 
-    ```
+* faire
+
+    ```bash
     tf-docs markdown .
     ```
+
 ### Alternative avec module de la Registry
-  * on peut remplacer le module "landfill" par un module vpc de la registry
-    ```
+
+* on peut remplacer le module "landfill" par un module vpc de la registry
+
+    ```HCL
     …
     data "aws_availability_zones" "available" {
       state = "available"
@@ -175,17 +204,22 @@ par exemple
       default_security_group_name = "landfill-SG"
     }
     ```
+
     et
-    ```
+
+    ```HCL
     module "security-group" {
       source  = "terraform-aws-modules/security-group/aws"
       version = "4.17.2"
     }
     ```
+
     [//]: # ( # TODO migrer le security groupe en module )
+
 ### Documentation des ressources dans l'exemple
 
-#### main  
+#### main
+
   ```mermaid
     graph TD
       z[.zprofile for exemple] ==> variables
@@ -211,7 +245,9 @@ par exemple
         main.tf --> module/wopr/wopr.tf
       end
   ```
+
 #### landfill
+
   ```mermaid
     graph TD
     subgraph avant 
@@ -251,8 +287,10 @@ par exemple
     landline_ssh -.- output
     landlord -.- output
     landfill -.- output
-  ```  
+  ```
+
 #### wopr
+
   ```mermaid
     graph TD
     subgraph avant
@@ -282,9 +320,12 @@ par exemple
     public_ip -.- output
 
   ```
-  ### Auto-documentation
+
+### Auto-documentation
+
   // generated with tf-docs -c .terraform-docs.yml . //
   [//]: # (BEGIN_TF_DOCS)
+
 ## Requirements
 
 | Name | Version |
@@ -309,7 +350,7 @@ par exemple
 ## Resources
 
 | Name | Type |
-|------|------|
+| ------ | ------ |
 | [aws_route53_record.woprPrivNSPriv](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
 | [aws_route53_record.woprPubNSPriv](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
 | [aws_route53_record.woprPubNSPub](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
@@ -326,7 +367,7 @@ par exemple
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ------ | ------------- | ------ | --------- | :--------: |
 | <a name="input_AWS_ANSIBLE_KEY"></a> [AWS\_ANSIBLE\_KEY](#input\_AWS\_ANSIBLE\_KEY) | clé publique ansible | `string` | n/a | yes |
 | <a name="input_AWS_LANDFILL_CIDR_BLOCK"></a> [AWS\_LANDFILL\_CIDR\_BLOCK](#input\_AWS\_LANDFILL\_CIDR\_BLOCK) | CIDR correspondant au réseau | `string` | `"192.168.88.0/24"` | no |
 | <a name="input_AWS_LANDFILL_SUBNET_PRIVE"></a> [AWS\_LANDFILL\_SUBNET\_PRIVE](#input\_AWS\_LANDFILL\_SUBNET\_PRIVE) | CIDR correspondant au sous-réseau privé | `string` | `"192.168.88.0/28"` | no |
@@ -340,14 +381,15 @@ par exemple
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ------ | ------------- |
 | <a name="output_debug"></a> [debug](#output\_debug) | n/a |
 | <a name="output_domain_name_servers"></a> [domain\_name\_servers](#output\_domain\_name\_servers) | ######### ## Outputs (readable) ######### |
 
 [//]: # (END_TF_DOCS)
 
-  ### REFERENCES 
-  - [Terraform CLI](https://developer.hashicorp.com/terraform/cli)
-  - [Provider AWS Terraform Hashicorp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
-  - [Ecriture de modules Terraform](https://developer.hashicorp.com/terraform/language/modules/develop)
-  - [Ecriture Flowchart Mermaid](https://mermaid.js.org/syntax/flowchart.html)
+### REFERENCES
+
+* [Terraform CLI](https://developer.hashicorp.com/terraform/cli)
+* [Provider AWS Terraform Hashicorp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
+* [Ecriture de modules Terraform](https://developer.hashicorp.com/terraform/language/modules/develop)
+* [Ecriture Flowchart Mermaid](https://mermaid.js.org/syntax/flowchart.html)
