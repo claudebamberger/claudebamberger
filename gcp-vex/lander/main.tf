@@ -162,7 +162,7 @@ resource "google_compute_instance" "woprPriv" {
       "sudo sh -c 'echo Acquire::http::proxy http://wopr-pub:8888/; > /etc/apt/apt.conf.d/60tinyproxy.conf'",
       "timeout 300 sh -c 'export http_proxy=http://wopr-pub:8888; curl aws.com; while [ $? != 0 ]; do sleep 30; curl aws.com; done '",
       "sudo apt-get update && sudo apt-get full-upgrade -y",
-      "sudo apt-get install -y byobu language-pack-en language-pack-en-base git cowsay zip unzip net-tools inetutils-ping dnsutils vim ufw cron ansible ansible-lint neofetch ",
+      "sudo apt-get install -y byobu language-pack-en-base git cowsay zip unzip net-tools inetutils-ping dnsutils vim ufw cron ansible ansible-lint neofetch ",
       "sudo sh -c 'echo export http_proxy=http://wopr-pub:8888 >> /etc/profile'",
       "sudo mount /dev/sdb /wopr4",
       "sudo grep 'wopr4' /etc/fstab; if [ $? != 0 ]; then sudo echo $(blkid /dev/sdb|grep 'LABEL=.wopr-data'|col3) /wopr4 ext4 defaults,nofail 0 1 > /tmp/prepfstab; sudo sh -c 'cat /tmp/prepfstab >> /etc/fstab' ; fi",
