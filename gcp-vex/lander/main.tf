@@ -24,7 +24,7 @@ module "vpc" {
   source = "terraform-google-modules/network/google"
   #version = "~> 7.2"
   #version = "~> 9.0"
-  version = "~> 18.0"
+  version = "~> 18.1"
 
   project_id   = var.GCP_PROJECT_ID
   network_name = "wopr-vpc"
