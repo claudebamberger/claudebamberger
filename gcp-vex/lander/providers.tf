@@ -9,7 +9,7 @@ terraform {
       # https://registry.terraform.io/providers/hashicorp/google/latest
       # 5.14 -> 6.28 (2025-04)
       # 6.28 -> 7.28 (2026-04)
-      source  = "hashicorp/google"
+      source  = "opentofu/google"
       # version = ">=6.28, <7.0"
       version = ">=7.28, <8.0"
     }

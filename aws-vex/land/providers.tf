@@ -8,7 +8,7 @@ terraform {
     aws = {
       # https://registry.terraform.io/providers/hashicorp/aws/latest
       # 5.34 -> 5.94 (2025-04)
-      source  = "hashicorp/aws"
+      source  = "opentofu/aws"
       # version = ">=5.94, <6.0"
       version = ">=6.0, <7.0" # (2026-04)
     }
