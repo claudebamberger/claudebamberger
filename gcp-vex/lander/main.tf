@@ -20,6 +20,7 @@ data "google_dns_managed_zone" "env_dns_zone" {
 ### network
 ##########
 # DONE: module https://registry.terraform.io/modules/terraform-google-modules/network/google/latest
+# also https://github.com/terraform-google-modules/terraform-google-network
 module "vpc" {
   source = "terraform-google-modules/network/google"
   #version = "~> 7.2"

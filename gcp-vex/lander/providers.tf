@@ -7,9 +7,10 @@ terraform {
   required_providers {
     google = {
       # https://registry.terraform.io/providers/hashicorp/google/latest
+      # https://search.opentofu.org/provider/opentofu/google/latest/
+      source  = "opentofu/google"
       # 5.14 -> 6.28 (2025-04)
       # 6.28 -> 7.28 (2026-04)
-      source  = "opentofu/google"
       # version = ">=6.28, <7.0"
       version = ">=7.28, <8.0"
     }
