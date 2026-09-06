@@ -6,7 +6,7 @@ data "aws_availability_zones" "available" {
 }
 data "aws_ebs_volumes" "wopr_data" {
   tags = {
-    role = "wopr-data"
+    role = "wopr-data-${var.AWS_ENV}"
   }
   filter {
     name   = "availability-zone"

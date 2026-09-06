@@ -5,7 +5,7 @@ module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   #version = ">=5.0,<6.0"
   version = ">=6.0,<7.0" # 6.6.1 (2026-04)
-  tags            = { Environment = "test" }
+  tags            = { Environment = "${var.AWS_ENV}" }
   cidr            = var.AWS_LANDFILL_CIDR_BLOCK
   private_subnets = ["${var.AWS_LANDFILL_SUBNET_PRIVE}"]
   public_subnets  = ["${var.AWS_LANDFILL_SUBNET_PUBLIC}"]
@@ -23,13 +23,13 @@ module "vpc" {
   manage_default_network_acl    = false
   manage_default_security_group = false
 
-  name                        = "landfill"
-  default_vpc_name            = "landfill"
-  private_subnet_names        = ["landfill-private"]
-  public_subnet_names         = ["landfill-public"]
-  default_network_acl_name    = "landfill-ACL"
-  default_route_table_name    = "landfill-RT"
-  default_security_group_name = "landfill-SG"
+  name                        = "landfill-${var.AWS_ENV}"
+  default_vpc_name            = "landfill-${var.AWS_ENV}"
+  private_subnet_names        = ["landfill-${var.AWS_ENV}-private"]
+  public_subnet_names         = ["landfill-${var.AWS_ENV}-public"]
+  default_network_acl_name    = "landfill-${var.AWS_ENV}-ACL"
+  default_route_table_name    = "landfill-${var.AWS_ENV}-RT"
+  default_security_group_name = "landfill-${var.AWS_ENV}-SG"
 }
 ##########
 ### DNS Zones
@@ -83,7 +83,7 @@ resource "aws_route53_record" "woprPubNSPub" {
   weighted_routing_policy {
     weight = 1
   }
-  name           = "aws.${var.AWS_MYDOMAIN}"
+  name           = "${var.AWS_ENV == "prod" ? "":"${var.AWS_ENV}."}aws.${var.AWS_MYDOMAIN}"
   type           = "A"
   ttl            = 300
   set_identifier = "aws"
@@ -91,7 +91,7 @@ resource "aws_route53_record" "woprPubNSPub" {
 }
 resource "aws_route53_record" "woprPubNSPriv" {
   zone_id = aws_route53_zone.private.zone_id
-  name    = "wopr4.local.aws.${var.AWS_MYDOMAIN}"
+  name    = "wopr4.local.${var.AWS_ENV == "prod" ? "":"${var.AWS_ENV}."}aws.${var.AWS_MYDOMAIN}"
   type    = "A"
   ttl     = 10
   records = [module.woprPub.wopr4_internal_ip]
@@ -139,7 +139,7 @@ EOT
 # DNS Name
 resource "aws_route53_record" "woprPrivNSPriv" {
   zone_id = aws_route53_zone.private.zone_id
-  name    = "wopr2.local.aws.${var.AWS_MYDOMAIN}"
+  name    = "wopr2.local.${var.AWS_ENV == "prod" ? "":"${var.AWS_ENV}."}aws.${var.AWS_MYDOMAIN}"
   type    = "A"
   ttl     = 10
   records = [module.woprPriv.wopr4_internal_ip]

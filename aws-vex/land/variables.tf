@@ -2,6 +2,10 @@ variable "AWS_REGION" {
   description = "région AWS visée, exported shell"
   type        = string
 }
+variable "AWS_ENV" {
+  description = "environnement, exported shell"
+  type        = string
+}
 variable "AWS_SECURE_CIDR" {
   description = "CIDR sûr en entrée, exported shell"
   type        = string

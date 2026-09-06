@@ -6,7 +6,7 @@
 ### DATAs
 ##########
 data "google_compute_disk" "wopr_data" {
-  name    = "wopr-data"
+  name    = "wopr-data${var.GCP_ENV == "prod" ? "":"-${var.GCP_ENV}"}"
   project = var.GCP_PROJECT_ID
   zone    = data.google_compute_zones.available.names[0]
 }
@@ -28,7 +28,7 @@ module "vpc" {
   version = "~> 18.1"
 
   project_id   = var.GCP_PROJECT_ID
-  network_name = "wopr-vpc"
+  network_name = "wopr-vpc-${var.GCP_ENV}"
   routing_mode = "GLOBAL"
   subnets = [
   ]
@@ -185,7 +185,7 @@ resource "google_compute_instance" "woprPriv" {
 ### DNS registration
 ##########
 resource "google_dns_record_set" "WoprPubDNS" {
-  name         = "wopr.${data.google_dns_managed_zone.env_dns_zone.dns_name}"
+  name         = "${var.GCP_ENV == "prod" ? "":"${var.GCP_ENV}."}wopr.${data.google_dns_managed_zone.env_dns_zone.dns_name}"
   type         = "A"
   ttl          = 300
   managed_zone = data.google_dns_managed_zone.env_dns_zone.name
