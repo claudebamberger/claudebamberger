@@ -24,7 +24,8 @@
 
 ## Terraform
 
-* télécharger [terraform](https://releases.hashicorp.com/terraform/1.4.6/terraform_1.4.6_darwin_arm64.zip) et installer dans ``/usr/local/bin/tf``(avec un lien /usr/local/terraform/…)
+* _télécharger [terraform](https://releases.hashicorp.com/terraform/1.4.6/terraform_1.4.6_darwin_arm64.zip) et installer dans ``/usr/local/bin/tf``(avec un lien /usr/local/terraform/…)_
+* **ou plutôt** télécharger [opentofu](https://opentofu.org/docs/intro/install/)
 * prévoir un .gitignore plus haut (ou racine) avec
 
     ```ini
@@ -390,6 +391,7 @@ par exemple
 ### REFERENCES
 
 * [Terraform CLI](https://developer.hashicorp.com/terraform/cli)
+* [opentofu](https://opentofu.org/)
 * [Provider AWS Terraform Hashicorp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
 * [Ecriture de modules Terraform](https://developer.hashicorp.com/terraform/language/modules/develop)
 * [Ecriture Flowchart Mermaid](https://mermaid.js.org/syntax/flowchart.html)

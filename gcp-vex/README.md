@@ -29,7 +29,8 @@
 
 ## Terraform
 
-* télécharger [terraform](https://releases.hashicorp.com/terraform/1.4.6/terraform_1.4.6_darwin_arm64.zip) et installer dans ``/usr/local/bin/tf`` (avec un lien /usr/local/terraform/…)
+* _télécharger [terraform](https://releases.hashicorp.com/terraform/1.4.6/terraform_1.4.6_darwin_arm64.zip) et installer dans ``/usr/local/bin/tf``(avec un lien /usr/local/terraform/…)_
+* **ou plutôt** télécharger [opentofu](https://opentofu.org/docs/intro/install/)
 * prévoir un .gitignore plus haut (ou racine) avec
 
     ```ini
